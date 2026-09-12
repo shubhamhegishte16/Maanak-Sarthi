@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Production / Builds
+backend/dist/
+backend/build/
+build/
+dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env files
+.env
+.env*.local
+backend/.env
+frontend/.env.local
+
+# Vercel & IDE
+.vercel
+.idea/
+.vscode/
+*.swp
+*.swo
