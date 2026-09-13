@@ -10,9 +10,13 @@ import StreamlinedUpdates from "@/components/StreamlinedUpdates";
 import SearchModal from "@/components/SearchModal";
 import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
+import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, UserCheck, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Home() {
+  const router = useRouter();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("home");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -59,7 +63,12 @@ export default function Home() {
   };
 
   const handleSelectCategory = (categoryId: string) => {
-    setIsSearchOpen(true);
+    if (categoryId === "standards") router.push("/standards");
+    else if (categoryId === "qcos") router.push("/updates");
+    else if (categoryId === "certification") router.push("/certification");
+    else if (categoryId === "labs") router.push("/labs");
+    else if (categoryId === "documents") router.push("/document-analyzer");
+    else setIsSearchOpen(true);
   };
 
   return (
@@ -71,7 +80,7 @@ export default function Home() {
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-bis-gold animate-pulse" />
             <span className="font-semibold tracking-wide">
-              {user ? `Logged In as ${user.name} (${user.role})` : "Public Portal • Bureau of Indian Standards"}
+              {user ? `Logged In as ${user.name} (${user.role})` : t("publicPortalBanner", "Public Portal • Bureau of Indian Standards")}
             </span>
           </div>
 
@@ -81,7 +90,7 @@ export default function Home() {
                 onClick={() => setUser(null)}
                 className="hover:underline font-bold text-bis-gold-light"
               >
-                ← Return to Public Landing Page
+                {t("returnToPublic", "← Return to Public Landing Page")}
               </button>
             ) : (
               <div className="flex items-center space-x-3">
@@ -89,14 +98,14 @@ export default function Home() {
                   onClick={() => handleOpenAuth("signin")}
                   className="hover:underline font-semibold text-white/90"
                 >
-                  Sign In
+                  {t("signIn", "Sign In")}
                 </button>
                 <span className="text-white/40">•</span>
                 <button
                   onClick={() => setUser({ name: "Rajesh Sharma", role: "Manufacturer", email: "rajesh@acme.in" })}
                   className="inline-flex items-center space-x-1 hover:underline font-bold text-bis-gold-light"
                 >
-                  <span>Instant Demo Login (Home Dashboard View)</span>
+                  <span>{t("instantDemoLogin", "Instant Demo Login (Dashboard View)")}</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
@@ -105,17 +114,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Navigation Header - Rendered ONLY on Home / Dashboard View */}
-      {user && (
-        <Navbar 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenAuthModal={() => handleOpenAuth("signin")}
-          user={user}
-          onLogout={() => setUser(null)}
-        />
-      )}
+      {/* Navigation Header - Rendered on both Public and Dashboard views */}
+      <Navbar 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenAuthModal={() => handleOpenAuth("signin")}
+        user={user}
+        onLogout={() => setUser(null)}
+        isLanding={!user}
+      />
 
       {/* Main Content Areas: PUBLIC LANDING PAGE vs LOGGED-IN DASHBOARD */}
       <div className="flex-grow">

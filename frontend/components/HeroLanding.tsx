@@ -16,19 +16,21 @@ import {
   Headphones, 
   ArrowRight 
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface HeroLandingProps {
   onExploreClick: () => void;
 }
 
 export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
+  const { t } = useLanguage();
   const miniCategories = [
-    { name: "Standards", icon: FileText },
-    { name: "Certification", icon: Award },
-    { name: "Labs", icon: FlaskConical },
-    { name: "QCOs", icon: CheckSquare },
-    { name: "Documents", icon: FolderArchive },
-    { name: "Support", icon: Headphones },
+    { name: t("standards", "Standards"), icon: FileText },
+    { name: t("certification", "Certification"), icon: Award },
+    { name: t("labs", "Labs"), icon: FlaskConical },
+    { name: t("qcos", "QCOs"), icon: CheckSquare },
+    { name: t("documents", "Documents"), icon: FolderArchive },
+    { name: t("more", "Support"), icon: Headphones },
   ];
 
   return (
@@ -43,11 +45,11 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
           className="flex justify-center mb-6"
         >
           <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-bis-border bg-white/70 backdrop-blur-sm text-xs font-medium text-bis-slate-muted shadow-sm tracking-wide">
-            <span>Trusted</span>
+            <span>{t("trusted", "Trusted")}</span>
             <span className="mx-2 text-bis-gold">•</span>
-            <span>Transparent</span>
+            <span>{t("transparent", "Transparent")}</span>
             <span className="mx-2 text-bis-gold">•</span>
-            <span>Together</span>
+            <span>{t("together", "Together")}</span>
           </div>
         </motion.div>
 
@@ -59,14 +61,13 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
           className="text-center max-w-4xl mx-auto mb-6"
         >
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif-title font-normal tracking-tight leading-[1.1] text-bis-slate">
-            Indian Standards, <br />
+            {t("heroTitle", "Indian Standards,")} <br />
             <span className="font-serif-italic font-normal text-bis-burgundy block mt-1">
-              for a Safer Tomorrow.
+              {t("heroItalic", "for a Safer Tomorrow.")}
             </span>
           </h1>
           <p className="mt-6 text-sm sm:text-base md:text-lg text-bis-slate-muted max-w-2xl mx-auto leading-relaxed">
-            We facilitate standardization, certification and quality assurance
-            to build a stronger, safer and more sustainable India.
+            {t("heroSubtitle", "We facilitate standardization, certification and quality assurance to build a stronger, safer and more sustainable India.")}
           </p>
         </motion.div>
 
@@ -134,7 +135,7 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
               </button>
             </div>
             <p className="mt-3 text-xs sm:text-sm text-white/85 font-light leading-snug">
-              Products in the market meet BIS standards for your safety.
+              {t("heroCard1Text", "Products in the market meet BIS standards for your safety.")}
             </p>
           </motion.div>
 
@@ -164,7 +165,7 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
               </div>
             </div>
             <p className="mt-2.5 text-xs text-bis-slate-muted leading-relaxed">
-              Businesses and consumers trusted BIS across India.
+              {t("heroCard2Text", "Businesses and consumers trusted BIS across India.")}
             </p>
           </motion.div>
 
@@ -195,7 +196,7 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
               </div>
             </div>
             <p className="mt-2.5 text-xs text-bis-slate-muted leading-relaxed">
-              Average customer rating for our services.
+              {t("heroCard3Text", "Average customer rating for our services.")}
             </p>
           </motion.div>
 
@@ -252,7 +253,7 @@ export default function HeroLanding({ onExploreClick }: HeroLandingProps) {
             onClick={onExploreClick}
             className="group inline-flex items-center space-x-3 px-8 py-3.5 bg-bis-burgundy text-white font-medium text-xs sm:text-sm rounded-full shadow-custom-lg hover:bg-bis-burgundy-light hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
           >
-            <span>Explore Our Services</span>
+            <span>{t("heroExploreBtn", "Explore Our Services")}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>
