@@ -10,49 +10,52 @@ import {
   FileCheck2, 
   ArrowRight 
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface CategoryGridProps {
   onSelectCategory: (id: string) => void;
 }
 
 export default function CategoryGrid({ onSelectCategory }: CategoryGridProps) {
+  const { t } = useLanguage();
+
   const categories = [
     {
       id: "standards",
-      title: "Indian Standards",
-      description: "Search and view the latest Indian Standards (IS).",
+      title: t("standards", "Indian Standards"),
+      description: t("catStdDesc", "Search and view the latest Indian Standards (IS)."),
       icon: BookOpen,
       count: "20,000+ Standards",
       badgeColor: "bg-bis-burgundy/10 text-bis-burgundy",
     },
     {
       id: "qcos",
-      title: "QCOs",
-      description: "Find applicable Quality Control Orders for your product.",
+      title: t("qcos", "QCOs"),
+      description: t("catQcoDesc", "Find applicable Quality Control Orders for your product."),
       icon: ShieldCheck,
       count: "700+ Mandates",
       badgeColor: "bg-bis-sage/20 text-bis-sage-dark",
     },
     {
       id: "certification",
-      title: "Certification Schemes",
-      description: "Learn about ISI, CRS, FMCS and more.",
+      title: t("certification", "Certification Schemes"),
+      description: t("catCertDesc", "Learn about ISI, CRS, FMCS and more."),
       icon: Settings,
       count: "4 Core Schemes",
       badgeColor: "bg-bis-gold/20 text-bis-slate",
     },
     {
       id: "labs",
-      title: "BIS-Recognized Labs",
-      description: "Locate accredited testing and calibration labs.",
+      title: t("labs", "BIS-Recognized Labs"),
+      description: t("catLabDesc", "Locate accredited testing and calibration labs."),
       icon: FlaskConical,
       count: "350+ Labs",
       badgeColor: "bg-bis-terracotta/10 text-bis-terracotta",
     },
     {
       id: "documents",
-      title: "Documents",
-      description: "Guides, forms, notices and circulars.",
+      title: t("documents", "Documents"),
+      description: t("catDocDesc", "Guides, forms, notices and circulars."),
       icon: FileCheck2,
       count: "Official Downloads",
       badgeColor: "bg-bis-slate/10 text-bis-slate",
@@ -67,17 +70,17 @@ export default function CategoryGrid({ onSelectCategory }: CategoryGridProps) {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h3 className="text-2xl sm:text-3xl font-serif-title font-normal text-bis-slate">
-              Explore by category
+              {t("catSectionTitle", "Explore by category")}
             </h3>
             <p className="text-xs sm:text-sm text-bis-slate-muted mt-1">
-              Browse official standards, mandates, testing networks, and certification pathways.
+              {t("catSectionSub", "Browse official standards, mandates, testing networks, and certification pathways.")}
             </p>
           </div>
           <button
             onClick={() => onSelectCategory("all")}
             className="hidden sm:inline-flex items-center space-x-1.5 text-xs font-semibold text-bis-burgundy hover:text-bis-burgundy-light transition-colors group"
           >
-            <span>View all</span>
+            <span>{t("catViewAll", "View all")}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -135,7 +138,7 @@ export default function CategoryGrid({ onSelectCategory }: CategoryGridProps) {
             onClick={() => onSelectCategory("all")}
             className="inline-flex items-center space-x-1.5 text-xs font-semibold text-bis-burgundy"
           >
-            <span>View all categories</span>
+            <span>{t("catViewAll", "View all categories")}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

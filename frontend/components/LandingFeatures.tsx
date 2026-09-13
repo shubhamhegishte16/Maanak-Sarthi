@@ -15,6 +15,7 @@ import {
   Users,
   Zap
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface LandingFeaturesProps {
   onSignInClick: () => void;
@@ -22,24 +23,26 @@ interface LandingFeaturesProps {
 }
 
 export default function LandingFeatures({ onSignInClick, onExploreClick }: LandingFeaturesProps) {
+  const { t } = useLanguage();
+
   const pillars = [
     {
-      title: "Mandatory Safety Standards",
-      desc: "Instant lookup of Indian Standards (IS) published by the Bureau of Indian Standards for domestic & imported goods.",
+      title: t("featPillar1Title", "Mandatory Safety Standards"),
+      desc: t("featPillar1Desc", "Instant lookup of Indian Standards (IS) published by the Bureau of Indian Standards for domestic & imported goods."),
       icon: ShieldCheck,
       badge: "IS Catalog",
       color: "text-bis-burgundy bg-bis-burgundy/10"
     },
     {
-      title: "Quality Control Orders (QCOs)",
-      desc: "Track gazette notifications and enforcement timelines for mandatory certification across 700+ product categories.",
+      title: t("featPillar2Title", "Quality Control Orders (QCOs)"),
+      desc: t("featPillar2Desc", "Track gazette notifications and enforcement timelines for mandatory certification across 700+ product categories."),
       icon: Award,
       badge: "Government Gazette",
       color: "text-bis-sage-dark bg-bis-sage/20"
     },
     {
-      title: "Recognized Testing Network",
-      desc: "Locate NABL-accredited BIS testing & calibration labs across all Indian states and regional branches.",
+      title: t("featPillar3Title", "Recognized Testing Network"),
+      desc: t("featPillar3Desc", "Locate NABL-accredited BIS testing & calibration labs across all Indian states and regional branches."),
       icon: FlaskConical,
       badge: "350+ Labs",
       color: "text-bis-terracotta bg-bis-terracotta/10"
@@ -60,13 +63,13 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="text-[11px] font-bold uppercase tracking-widest text-bis-slate-muted">
-            National Quality Infrastructure
+            {t("featMissionTag", "National Quality Infrastructure")}
           </span>
           <h2 className="text-3xl sm:text-4xl font-serif-title font-normal text-bis-slate mt-2">
-            Built for Transparency, Compliance & Safety.
+            {t("featMissionTitle", "Built for Transparency, Compliance & Safety.")}
           </h2>
           <p className="text-xs sm:text-sm text-bis-slate-muted mt-3 leading-relaxed">
-            BIS Guidance simplifies standard verification for manufacturers, importers, lab officers, and Indian consumers.
+            {t("featMissionSub", "BIS Guidance simplifies standard verification for manufacturers, importers, lab officers, and Indian consumers.")}
           </p>
         </div>
 
@@ -101,12 +104,12 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-bis-border/50 flex items-center justify-between text-xs">
-                  <span className="text-bis-slate-muted text-[11px]">Official BIS Standard</span>
+                  <span className="text-bis-slate-muted text-[11px]">{t("officialBISStandard", "Official BIS Standard")}</span>
                   <button 
                     onClick={onExploreClick}
                     className="font-semibold text-bis-burgundy hover:underline inline-flex items-center space-x-1"
                   >
-                    <span>View details</span>
+                    <span>{t("viewDetails", "View details")}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -123,17 +126,17 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-8 gap-4">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-widest text-bis-slate-muted">
-                Frequently Verified
+                {t("featCatalogTag", "Frequently Verified")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-serif-title font-normal text-bis-slate mt-1">
-                Popular Indian Standards Directory
+                {t("featCatalogTitle", "Popular Indian Standards Directory")}
               </h2>
             </div>
             <button
               onClick={onExploreClick}
               className="inline-flex items-center space-x-2 text-xs font-semibold text-bis-burgundy hover:underline"
             >
-              <span>Explore All 20,000+ Standards</span>
+              <span>{t("featExploreAll", "Explore All 20,000+ Standards")}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -159,12 +162,12 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                     {std.name}
                   </h4>
                   <p className="text-[11px] text-bis-slate-muted mt-2">
-                    Category: <span className="font-medium text-bis-slate">{std.category}</span>
+                    {t("category", "Category")}: <span className="font-medium text-bis-slate">{std.category}</span>
                   </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-bis-border/50 flex items-center justify-between text-[11px]">
-                  <span className="text-bis-slate-muted">Verified Gazette Source</span>
+                  <span className="text-bis-slate-muted">{t("verifiedGazetteSource", "Verified Gazette Source")}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-bis-slate-muted group-hover:text-bis-burgundy group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
@@ -187,7 +190,7 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                 99%
               </span>
               <span className="text-xs text-white/80 font-light mt-1 block">
-                Market Product Safety Compliance
+                {t("featStat1", "Market Product Safety Compliance")}
               </span>
             </div>
             <div className="pt-4 md:pt-0 md:pl-6">
@@ -195,7 +198,7 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                 2.5M+
               </span>
               <span className="text-xs text-white/80 font-light mt-1 block">
-                Businesses & Consumers Served
+                {t("featStat2", "Businesses & Consumers Served")}
               </span>
             </div>
             <div className="pt-4 md:pt-0 md:pl-6">
@@ -203,7 +206,7 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                 350+
               </span>
               <span className="text-xs text-white/80 font-light mt-1 block">
-                BIS-Recognized Testing Labs
+                {t("featStat3", "BIS-Recognized Testing Labs")}
               </span>
             </div>
             <div className="pt-4 md:pt-0 md:pl-6">
@@ -211,7 +214,7 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
                 700+
               </span>
               <span className="text-xs text-white/80 font-light mt-1 block">
-                Quality Control Mandates (QCOs)
+                {t("featStat4", "Quality Control Mandates (QCOs)")}
               </span>
             </div>
           </div>
@@ -223,10 +226,10 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
       <section className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <div className="bg-white p-8 sm:p-12 rounded-3xl border border-bis-border shadow-custom-lg">
           <h2 className="text-2xl sm:text-4xl font-serif-title font-normal text-bis-slate">
-            Ready to verify your product compliance?
+            {t("featCtaTitle", "Ready to verify your product compliance?")}
           </h2>
           <p className="text-xs sm:text-sm text-bis-slate-muted max-w-xl mx-auto mt-3">
-            Sign in to access your customized dashboard, query real-time Indian Standards, and track certification schemes.
+            {t("featCtaSub", "Sign in to access your customized dashboard, query real-time Indian Standards, and track certification schemes.")}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -234,13 +237,13 @@ export default function LandingFeatures({ onSignInClick, onExploreClick }: Landi
               onClick={onSignInClick}
               className="w-full sm:w-auto px-8 py-3.5 bg-bis-burgundy text-white text-xs sm:text-sm font-semibold rounded-full shadow-custom-sm hover:bg-bis-burgundy-light transition-all"
             >
-              Sign In to Portal
+              {t("featCtaSignIn", "Sign In to Portal")}
             </button>
             <button
               onClick={onExploreClick}
               className="w-full sm:w-auto px-8 py-3.5 bg-bis-cream border border-bis-border text-bis-slate text-xs sm:text-sm font-semibold rounded-full hover:bg-bis-cream-dark transition-all"
             >
-              Explore AI Guidance
+              {t("featCtaExplore", "Explore AI Guidance")}
             </button>
           </div>
         </div>

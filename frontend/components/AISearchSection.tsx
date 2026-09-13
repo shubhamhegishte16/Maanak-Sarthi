@@ -14,11 +14,16 @@ import {
   ExternalLink
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
+
 interface AISearchSectionProps {
   onSelectCategory?: (category: string) => void;
 }
 
 export default function AISearchSection({ onSelectCategory }: AISearchSectionProps) {
+  const router = useRouter();
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [activePresetIndex, setActivePresetIndex] = useState(0);
 
@@ -74,9 +79,8 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    // Find closest matching preset or keep active
-    alert(`Searching BIS Guidance database for: "${query}"`);
+    const targetQ = query.trim() || currentPreset.question;
+    router.push(`/assistant?q=${encodeURIComponent(targetQ)}`);
   };
 
   return (
@@ -91,20 +95,20 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
             {/* Upper Tracked Tagline */}
             <div className="flex items-center space-x-2 text-[11px] font-semibold tracking-widest text-bis-slate-muted uppercase">
               <span className="w-2 h-2 rounded-full bg-bis-terracotta animate-pulse" />
-              <span>Indian Standards • Verified Sources • Real Answers</span>
+              <span>{t("aiSearchTag", "Indian Standards • Verified Sources • Real Answers")}</span>
             </div>
 
             {/* Main Headline */}
             <h2 className="text-3xl sm:text-5xl font-serif-title font-normal text-bis-slate leading-tight">
-              Navigate Indian Standards, <br />
+              {t("aiSearchTitle", "Navigate Indian Standards,")} <br />
               <span className="font-serif-italic text-bis-slate/90">
-                with confidence.
+                {t("aiSearchItalic", "with confidence.")}
               </span>
             </h2>
 
             {/* Subtitle Description */}
             <p className="text-sm sm:text-base text-bis-slate-muted leading-relaxed max-w-xl">
-              Get accurate, source-grounded information on Indian Standards, Quality Control Orders, certification schemes, and BIS-recognized labs — all in one place.
+              {t("aiSearchSub", "Get accurate, source-grounded information on Indian Standards, Quality Control Orders, certification schemes, and BIS-recognized labs — all in one place.")}
             </p>
 
             {/* Interactive Search Box */}
@@ -115,7 +119,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ask a question about a product, standard or requirement..."
+                  placeholder={t("aiSearchPlaceholder", "Ask a question about a product, standard or requirement...")}
                   className="w-full text-xs sm:text-sm text-bis-slate placeholder-bis-slate-muted/70 bg-transparent focus:outline-none pr-4"
                 />
                 <button
@@ -131,7 +135,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
             {/* Quick Suggestion Pills */}
             <div className="pt-2">
               <p className="text-[11px] font-medium text-bis-slate-muted mb-2.5">
-                Popular guidance topics:
+                {t("aiSearchPopularTopics", "Popular guidance topics:")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {presets.map((item, idx) => (
@@ -165,11 +169,11 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center space-x-2 text-xs font-bold tracking-wider text-bis-slate uppercase">
                   <span className="w-2 h-2 rounded-full bg-bis-sage" />
-                  <span>SOURCE-GROUNDED AI</span>
+                  <span>{t("sourceGrounded", "SOURCE-GROUNDED AI")}</span>
                 </div>
                 <div className="flex items-center space-x-1 text-[11px] text-bis-burgundy bg-bis-burgundy/5 px-2.5 py-1 rounded-full border border-bis-burgundy/10 font-medium">
                   <Sparkles className="w-3 h-3 text-bis-burgundy" />
-                  <span>Real-time Verification</span>
+                  <span>{t("realTimeVerification", "Real-time Verification")}</span>
                 </div>
               </div>
 
@@ -200,7 +204,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                     {/* Sources Sub-list */}
                     <div className="mt-4 pt-3 border-t border-bis-border/60">
                       <p className="text-[11px] font-bold text-bis-slate-muted uppercase tracking-wider mb-2">
-                        Sources
+                        {t("sources", "Sources")}
                       </p>
                       <div className="space-y-2">
                         {currentPreset.sources.map((src, i) => (
@@ -231,7 +235,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                         className="flex items-center space-x-1.5 p-2 bg-white rounded-xl border border-bis-border shadow-xs hover:border-bis-burgundy transition-all"
                       >
                         <FileText className="w-3.5 h-3.5 text-bis-burgundy" />
-                        <span className="text-[11px] font-medium text-bis-slate">Indian Standards</span>
+                        <span className="text-[11px] font-medium text-bis-slate">{t("standards", "Indian Standards")}</span>
                       </button>
 
                       <button 
@@ -239,7 +243,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                         className="flex items-center space-x-1.5 p-2 bg-white rounded-xl border border-bis-border shadow-xs hover:border-bis-burgundy transition-all"
                       >
                         <ShieldCheck className="w-3.5 h-3.5 text-bis-sage-dark" />
-                        <span className="text-[11px] font-medium text-bis-slate">QCOs</span>
+                        <span className="text-[11px] font-medium text-bis-slate">{t("qcos", "QCOs")}</span>
                       </button>
 
                       <button 
@@ -247,7 +251,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                         className="flex items-center space-x-1.5 p-2 bg-white rounded-xl border border-bis-border shadow-xs hover:border-bis-burgundy transition-all"
                       >
                         <Settings className="w-3.5 h-3.5 text-bis-gold" />
-                        <span className="text-[11px] font-medium text-bis-slate">Schemes</span>
+                        <span className="text-[11px] font-medium text-bis-slate">{t("certification", "Schemes")}</span>
                       </button>
 
                       <button 
@@ -255,7 +259,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
                         className="flex items-center space-x-1.5 p-2 bg-white rounded-xl border border-bis-border shadow-xs hover:border-bis-burgundy transition-all"
                       >
                         <FlaskConical className="w-3.5 h-3.5 text-bis-terracotta" />
-                        <span className="text-[11px] font-medium text-bis-slate">Recognized Labs</span>
+                        <span className="text-[11px] font-medium text-bis-slate">{t("labs", "Recognized Labs")}</span>
                       </button>
                     </div>
 
@@ -263,7 +267,7 @@ export default function AISearchSection({ onSelectCategory }: AISearchSectionPro
 
                   {/* Bottom Flow Caption */}
                   <p className="text-[11px] text-center text-bis-slate-muted italic pt-1">
-                    From product to compliance — with verified sources.
+                    {t("fromProductToCompliance", "From product to compliance — with verified sources.")}
                   </p>
 
                 </motion.div>
