@@ -22,10 +22,12 @@ import {
   BookmarkCheck
 } from "lucide-react";
 import { useLanguage, SUPPORTED_LANGUAGES, LanguageCode } from "@/context/LanguageContext";
+import { useAuth, roleLabels } from "@/context/AuthContext";
 
 interface UserProfile {
+  id: string;
   name: string;
-  role: string;
+  role: "consumer" | "business" | "lab";
   email: string;
 }
 
@@ -42,12 +44,15 @@ interface NavbarProps {
 export default function Navbar({ 
   onOpenSearch, 
   onOpenAuthModal,
-  user = { name: "Rajesh Sharma", role: "Manufacturer", email: "rajesh@acmemfg.in" },
+  user = null,
   onLogout,
   isLanding
 }: NavbarProps) {
+  const { user: contextUser, logout: contextLogout } = useAuth();
+  const activeUser = user ?? contextUser;
+  const handleLogout = onLogout ?? contextLogout;
   const pathname = usePathname();
-  const isLandingMode = isLanding !== undefined ? isLanding : (pathname === "/" && !user);
+  const isLandingMode = isLanding !== undefined ? isLanding : (pathname === "/" && !activeUser);
   const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
@@ -109,7 +114,7 @@ export default function Navbar({
             </span>
           </Link>
           
-          {!isLandingMode && user && (
+          {!isLandingMode && activeUser && (
             <>
               <span className="h-5 w-[1px] bg-bis-slate/20 hidden sm:block" />
               <Link
@@ -243,19 +248,19 @@ export default function Navbar({
           )}
 
           {/* User Profile Pill or Sign In */}
-          {user ? (
+          {activeUser ? (
             <div className="hidden sm:flex items-center space-x-2">
               <Link
                 href="/dashboard"
                 className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-full border border-bis-border text-xs hover:border-bis-burgundy/40 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-bis-sage" />
-                <span className="font-semibold text-bis-slate">{user.name}</span>
-                <span className="text-[10px] text-bis-slate-muted uppercase">({user.role})</span>
+                <span className="font-semibold text-bis-slate">{activeUser.name}</span>
+                <span className="text-[10px] text-bis-slate-muted uppercase">({roleLabels[activeUser.role]})</span>
               </Link>
-              {onLogout && (
+              {handleLogout && (
                 <button
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   className="p-1.5 text-bis-slate-muted hover:text-bis-burgundy hover:bg-white rounded-full transition-colors"
                   title="Log Out"
                 >
@@ -358,7 +363,7 @@ export default function Navbar({
               </button>
             )}
 
-            {user ? (
+            {activeUser ? (
               <Link
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}

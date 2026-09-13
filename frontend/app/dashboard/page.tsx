@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -25,18 +25,18 @@ import {
   Plus
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth, roleLabels } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const { t } = useLanguage();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "standards" | "compliance" | "docs">("overview");
 
-  const user = {
-    name: "Rajesh Sharma",
-    company: "Acme Manufacturing & Appliances Pvt Ltd",
-    role: "Compliance Officer / Manufacturer",
-    email: "rajesh@acmemfg.in",
-    licenceType: "ISI Scheme I Applicant",
-  };
+  useEffect(() => {
+    if (!loading && !user) router.replace("/");
+  }, [loading, user, router]);
 
   const savedStandards = [
     { isNumber: "IS 302 (Part 2/Sec 21):2018", title: "Safety of Household Electric Water Heaters", status: "mandatory_qco" as StandardStatus, dateAdded: "02 Sep 2026", scheme: "Scheme I (ISI)" },
@@ -60,15 +60,19 @@ export default function DashboardPage() {
     { title: "Gazette Enforcement Deadline approaching for Cookware QCO", date: "04 Sep 2026", category: "QCO Notification", unread: false },
   ];
 
+  if (loading || !user) return <main className="min-h-screen bg-bis-cream" />;
+
+  const company = user.role === "business" ? "Registered business profile" : "Personal compliance profile";
+
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">
-      <Navbar user={user} />
+      <Navbar user={user} onLogout={logout} />
 
       <PageHeader
-        title={t("dashTitle", "Manufacturer")}
+        title={t("dashTitle", roleLabels[user.role])}
         italicWord={t("dashItalic", "Dashboard")}
         description={t("dashSubtitle", "Monitor saved Indian Standards, tracked products, document audit checklists, and testing laboratory pipelines across your manufacturing portfolio.")}
-        badgeText={t("dashBadge", "Authenticated Workspace • Acme Manufacturing Pvt Ltd")}
+        badgeText={t("dashBadge", `Authenticated Workspace • ${company}`)}
         breadcrumbs={[{ label: t("dashboard", "My Dashboard") }]}
         actions={
           <div className="flex items-center space-x-2">
@@ -89,7 +93,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-bis-border shadow-custom-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 rounded-2xl bg-bis-cream-dark text-bis-burgundy flex items-center justify-center font-bold text-xl border border-bis-border">
-              RS
+              {user.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -99,7 +103,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-bis-slate-muted mt-0.5">
-                {user.company} • <span className="font-medium text-bis-slate">{user.email}</span>
+                {company} • <span className="font-medium text-bis-slate">{user.email}</span>
               </p>
             </div>
           </div>

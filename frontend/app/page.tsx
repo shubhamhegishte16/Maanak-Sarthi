@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, UserCheck, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth, roleLabels } from "@/context/AuthContext";
 
 export default function Home() {
   const router = useRouter();
@@ -22,8 +23,7 @@ export default function Home() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   
-  // User state: null = Public Landing View (Image 1), active object = Logged-In Dashboard View (Image 2)
-  const [user, setUser] = useState<{ name: string; role: string; email: string } | null>(null);
+  const { user, loading, logout } = useAuth();
 
   // Keyboard shortcut Ctrl+K / Cmd+K for search modal
   useEffect(() => {
@@ -42,20 +42,9 @@ export default function Home() {
     setIsAuthOpen(true);
   };
 
-  const handleLoginSuccess = (userProfile: { name: string; role: string; email: string }) => {
-    setUser(userProfile);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const handleExploreClick = () => {
-    // Demo login into dashboard or scroll to AI search
     if (!user) {
-      setUser({
-        name: "Rajesh Sharma",
-        role: "Manufacturer",
-        email: "rajesh@acmemfg.in"
-      });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      handleOpenAuth("signin");
     } else {
       const target = document.getElementById("guidance-search");
       if (target) target.scrollIntoView({ behavior: "smooth" });
@@ -71,6 +60,8 @@ export default function Home() {
     else setIsSearchOpen(true);
   };
 
+  if (loading) return <main className="min-h-screen bg-bis-cream" />;
+
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">
       
@@ -80,14 +71,14 @@ export default function Home() {
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-bis-gold animate-pulse" />
             <span className="font-semibold tracking-wide">
-              {user ? `Logged In as ${user.name} (${user.role})` : t("publicPortalBanner", "Public Portal • Bureau of Indian Standards")}
+              {user ? `Logged In as ${user.name} (${roleLabels[user.role]})` : t("publicPortalBanner", "Public Portal • Bureau of Indian Standards")}
             </span>
           </div>
 
           <div className="flex items-center space-x-3">
             {user ? (
               <button
-                onClick={() => setUser(null)}
+                onClick={logout}
                 className="hover:underline font-bold text-bis-gold-light"
               >
                 {t("returnToPublic", "← Return to Public Landing Page")}
@@ -102,10 +93,10 @@ export default function Home() {
                 </button>
                 <span className="text-white/40">•</span>
                 <button
-                  onClick={() => setUser({ name: "Rajesh Sharma", role: "Manufacturer", email: "rajesh@acme.in" })}
+                  onClick={() => handleOpenAuth("signin")}
                   className="inline-flex items-center space-x-1 hover:underline font-bold text-bis-gold-light"
                 >
-                  <span>{t("instantDemoLogin", "Instant Demo Login (Dashboard View)")}</span>
+                  <span>{t("instantDemoLogin", "Sign In to Dashboard")}</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
@@ -121,7 +112,7 @@ export default function Home() {
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenAuthModal={() => handleOpenAuth("signin")}
         user={user}
-        onLogout={() => setUser(null)}
+        onLogout={logout}
         isLanding={!user}
       />
 
@@ -151,7 +142,7 @@ export default function Home() {
             <div className="bg-bis-sage-light/70 border-b border-bis-sage/20 py-2.5 px-4 text-center">
               <div className="max-w-7xl mx-auto flex items-center justify-center space-x-2 text-xs font-semibold text-bis-sage-dark">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Authenticated Session: {user.name} ({user.role})</span>
+                <span>Authenticated Session: {user.name} ({roleLabels[user.role]})</span>
                 <span className="mx-2">•</span>
                 <span>Accessing Source-Grounded AI Search & Certified Sources</span>
               </div>
@@ -184,7 +175,6 @@ export default function Home() {
         isOpen={isAuthOpen}
         initialMode={authMode}
         onClose={() => setIsAuthOpen(false)}
-        onSuccessLogin={handleLoginSuccess}
       />
     </main>
   );

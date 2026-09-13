@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="min-h-screen bg-bis-cream text-bis-slate antialiased selection:bg-bis-burgundy selection:text-white">
         <LanguageProvider>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </LanguageProvider>
       </body>
     </html>

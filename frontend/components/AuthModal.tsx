@@ -16,6 +16,8 @@ import {
   Sparkles,
   Phone
 } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/api";
+import { useAuth, type UserRole } from "@/context/AuthContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,7 +28,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "signin", onSuccessLogin }: AuthModalProps) {
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
-  const [selectedRole, setSelectedRole] = useState<"consumer" | "business" | "lab" | "officer">("consumer");
+  const [selectedRole, setSelectedRole] = useState<UserRole>("consumer");
   const [showPassword, setShowPassword] = useState(false);
   
   // Form states
@@ -35,6 +37,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, register } = useAuth();
 
   if (!isOpen) return null;
 
@@ -44,19 +49,21 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
     { id: "lab", label: "BIS-Recognized Lab", icon: ShieldCheck },
   ];
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userRoleName = selectedRole === "business" ? "Manufacturer" : selectedRole === "lab" ? "BIS Lab Officer" : "Citizen Consumer";
-    const userName = fullName || (email ? email.split("@")[0] : "Rajesh Sharma");
-    
-    if (onSuccessLogin) {
-      onSuccessLogin({
-        name: userName.charAt(0).toUpperCase() + userName.slice(1),
-        role: userRoleName,
-        email: email || "rajesh@acme.gov.in"
-      });
+    setErrorMessage("");
+    setIsSubmitting(true);
+    try {
+      const user = mode === "signin"
+        ? await login(email, password, rememberMe)
+        : await register({ name: fullName, email, phone, password, role: selectedRole });
+      onSuccessLogin?.({ name: user.name, role: user.role, email: user.email });
+      onClose();
+    } catch (error: unknown) {
+      setErrorMessage(getApiErrorMessage(error, "Unable to connect to the authentication service"));
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   return (
@@ -188,7 +195,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                     <button
                       key={r.id}
                       type="button"
-                      onClick={() => setSelectedRole(r.id as any)}
+                      onClick={() => setSelectedRole(r.id as UserRole)}
                       className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all flex flex-col items-center justify-center text-center space-y-1 ${
                         isSelected
                           ? "bg-white border-bis-burgundy ring-1 ring-bis-burgundy shadow-xs"
@@ -225,6 +232,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                     />
                   </div>
                 </div>
+              )}
+
+              {errorMessage && (
+                <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {errorMessage}
+                </p>
               )}
 
               <div>
@@ -325,9 +338,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               {/* Submit Pill Button */}
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full py-3 bg-bis-burgundy text-white font-semibold text-xs sm:text-sm rounded-full shadow-custom-sm hover:bg-bis-burgundy-light transition-all flex items-center justify-center space-x-2 mt-2"
               >
-                <span>{mode === "signin" ? "Sign In to Portal" : "Complete Registration"}</span>
+                <span>{isSubmitting ? "Please wait..." : mode === "signin" ? "Sign In to Portal" : "Complete Registration"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
