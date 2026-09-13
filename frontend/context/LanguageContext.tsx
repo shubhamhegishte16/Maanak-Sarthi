@@ -462,7 +462,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
 
     // Landing Page & Home Dashboard
     publicPortalBanner: "Public Portal • Bureau of Indian Standards",
-    instantDemoLogin: "Instant Demo Login (Dashboard View)",
+    instantDemoLogin: "Sign In to Dashboard",
     returnToPublic: "← Return to Public Landing Page",
     heroCard1Text: "Products in the market meet BIS standards for your safety.",
     heroCard2Text: "Businesses and consumers trusted BIS across India.",
