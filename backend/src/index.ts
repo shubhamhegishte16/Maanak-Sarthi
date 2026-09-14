@@ -6,7 +6,10 @@ import authRoutes from './routes/authRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 import { ensureOfficialSourcesSeeded } from './services/sourceRetrievalService.js';
+import { initUserPanelDatabase } from './config/initDatabase.js';
 
 dotenv.config();
 
@@ -21,14 +24,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/documents', documentRoutes);
 
 // Base health check route to verify server initialization
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', service: 'manak-saarthi-backend' });
 });
 
-// Initialize official BIS sources in Neon DB in background
+// Initialize official BIS sources and User Panel tables in Neon DB in background
 void ensureOfficialSourcesSeeded();
+void initUserPanelDatabase();
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -17,11 +17,12 @@ import {
   ArrowRight, 
   ShieldCheck, 
   Clock, 
-  Check,
-  AlertTriangle,
-  RotateCcw
+  Check, 
+  AlertTriangle, 
+  RotateCcw 
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { userApi } from "@/lib/api";
 
 interface ReadinessPillar {
   title: string;
@@ -92,6 +93,52 @@ export default function ApplicationReadinessPage() {
       ]
     }
   ]);
+
+  useEffect(() => {
+    async function loadReadiness() {
+      try {
+        const res = await userApi.getReadiness();
+        if (res.data.success && Array.isArray(res.data.pillars) && res.data.pillars.length > 0) {
+          setPillars((prev) =>
+            res.data.pillars.map((p: any, idx: number) => ({
+              ...p,
+              icon: prev[idx]?.icon || FileText,
+              color: prev[idx]?.color || "text-bis-burgundy",
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch live readiness:", err);
+      }
+    }
+    loadReadiness();
+  }, []);
+
+  const handleToggleTask = async (pillarTitle: string, task: string, currentStatus: string) => {
+    const nextStatus = currentStatus === "ready" ? "attention" : "ready";
+
+    // Optimistic UI update
+    setPillars((prev) =>
+      prev.map((p) => {
+        if (p.title !== pillarTitle) return p;
+        const newItems = p.items.map((i) =>
+          i.task === task ? { ...i, status: nextStatus as any } : i
+        );
+        const readyCount = newItems.filter((i) => i.status === "ready").length;
+        return { ...p, items: newItems, readyCount };
+      })
+    );
+
+    try {
+      await userApi.updateReadinessTask({
+        pillarTitle,
+        task,
+        status: nextStatus,
+      });
+    } catch (err) {
+      console.error("Failed to persist task status:", err);
+    }
+  };
 
   const totalTasks = pillars.reduce((sum, p) => sum + p.totalCount, 0);
   const totalReady = pillars.reduce((sum, p) => sum + p.readyCount, 0);
@@ -215,7 +262,8 @@ export default function ApplicationReadinessPage() {
                   {pillar.items.map((item, itemIdx) => (
                     <div
                       key={itemIdx}
-                      className="p-3.5 rounded-2xl bg-bis-cream border border-bis-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      onClick={() => handleToggleTask(pillar.title, item.task, item.status)}
+                      className="p-3.5 rounded-2xl bg-bis-cream border border-bis-border hover:border-bis-burgundy/50 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center space-x-2">

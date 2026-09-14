@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -21,6 +21,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { userApi } from "@/lib/api";
 
 type AuditStatus = "supported" | "missing" | "manual_check";
 
@@ -116,8 +117,50 @@ function ComplianceCheckerContent() {
 
   const [selectedStandard, setSelectedStandard] = useState(requestedStd);
   const [filterStatus, setFilterStatus] = useState<"all" | AuditStatus>("all");
+  const [requirements, setRequirements] = useState<RequirementItem[]>(
+    SAMPLE_AUDIT_DATA[requestedStd] || SAMPLE_AUDIT_DATA.default
+  );
 
-  const requirements = SAMPLE_AUDIT_DATA[selectedStandard] || SAMPLE_AUDIT_DATA.default;
+  useEffect(() => {
+    async function loadCompliance() {
+      try {
+        const res = await userApi.getCompliance(selectedStandard);
+        if (res.data.success && Array.isArray(res.data.requirements) && res.data.requirements.length > 0) {
+          setRequirements(res.data.requirements);
+        }
+      } catch (err) {
+        console.error("Failed to load compliance data:", err);
+      }
+    }
+    loadCompliance();
+  }, [selectedStandard]);
+
+  const handleToggleAuditStatus = async (item: RequirementItem) => {
+    const cycle: Record<AuditStatus, AuditStatus> = {
+      supported: "missing",
+      missing: "manual_check",
+      manual_check: "supported",
+    };
+    const nextStatus = cycle[item.status];
+
+    setRequirements((prev) =>
+      prev.map((r) => (r.id === item.id ? { ...r, status: nextStatus } : r))
+    );
+
+    try {
+      await userApi.saveCompliance({
+        standard_number: selectedStandard,
+        clause: item.clause,
+        parameter: item.parameter,
+        standard_spec: item.standardSpec,
+        status: nextStatus,
+        evidence_source: item.evidenceSource,
+        notes: item.notes,
+      });
+    } catch (err) {
+      console.error("Failed to persist compliance update:", err);
+    }
+  };
 
   const filteredRequirements = requirements.filter((item) => {
     if (filterStatus === "all") return true;
@@ -294,24 +337,30 @@ function ComplianceCheckerContent() {
                       {item.standardSpec}
                     </td>
                     <td className="py-4 px-6 align-top">
-                      {item.status === "supported" && (
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-sage-light text-bis-sage-dark border border-bis-sage/30">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Evidence Found</span>
-                        </span>
-                      )}
-                      {item.status === "missing" && (
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-gold-light text-bis-terracotta border border-bis-gold/40">
-                          <AlertTriangle className="w-3 h-3" />
-                          <span>Missing Evidence</span>
-                        </span>
-                      )}
-                      {item.status === "manual_check" && (
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-cream-dark text-bis-slate-muted border border-bis-border">
-                          <HelpCircle className="w-3 h-3" />
-                          <span>Manual Verification</span>
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAuditStatus(item)}
+                        className="cursor-pointer hover:opacity-80 transition-opacity title='Click to toggle status'"
+                      >
+                        {item.status === "supported" && (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-sage-light text-bis-sage-dark border border-bis-sage/30">
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Evidence Found</span>
+                          </span>
+                        )}
+                        {item.status === "missing" && (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-gold-light text-bis-terracotta border border-bis-gold/40">
+                            <AlertTriangle className="w-3 h-3" />
+                            <span>Missing Evidence</span>
+                          </span>
+                        )}
+                        {item.status === "manual_check" && (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-bis-cream-dark text-bis-slate-muted border border-bis-border">
+                            <HelpCircle className="w-3 h-3" />
+                            <span>Manual Verification</span>
+                          </span>
+                        )}
+                      </button>
                     </td>
                     <td className="py-4 px-6 align-top space-y-1 max-w-sm">
                       {item.evidenceSource && (

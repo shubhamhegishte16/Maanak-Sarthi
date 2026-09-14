@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -25,6 +25,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { publicApi } from "@/lib/api";
 
 interface IndianStandard {
   isNumber: string;
@@ -296,13 +297,50 @@ function StandardsExplorerContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("query") || "";
 
+  const [standards, setStandards] = useState<IndianStandard[]>(STANDARDS_DATABASE);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [filterMandatoryOnly, setFilterMandatoryOnly] = useState(false);
   const [selectedStandard, setSelectedStandard] = useState<IndianStandard | null>(null);
 
+  useEffect(() => {
+    async function loadStandards() {
+      try {
+        const res = await publicApi.getStandards();
+        if (res.data.success && Array.isArray(res.data.standards) && res.data.standards.length > 0) {
+          const mapped: IndianStandard[] = res.data.standards.map((s: any) => ({
+            isNumber: s.is_number,
+            title: s.title,
+            year: s.last_revised || "2024",
+            category: s.sector || "General",
+            status: (s.status as StandardStatus) || "mandatory_qco",
+            scope: s.scope || s.title,
+            amendmentsCount: s.amendments_count || 0,
+            lastAmendmentDate: s.last_amendment_date || "Recent",
+            mandatoryQCO: s.status?.includes("mandatory") ?? true,
+            qcoName: s.qco_reference,
+            stiAvailable: s.sti_available ?? true,
+            relatedStandards: Array.isArray(s.related_standards) ? s.related_standards : [],
+            recognizedLabsCount: s.recognized_labs_count || 12,
+            lastVerified: new Date().toLocaleDateString("en-GB")
+          }));
+
+          // Merge without duplicates
+          setStandards((prev) => {
+            const existingNumbers = new Set(mapped.map((m) => m.isNumber));
+            const remaining = prev.filter((p) => !existingNumbers.has(p.isNumber));
+            return [...mapped, ...remaining];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch live standards:", err);
+      }
+    }
+    loadStandards();
+  }, []);
+
   const filteredStandards = useMemo(() => {
-    return STANDARDS_DATABASE.filter((std) => {
+    return standards.filter((std) => {
       const matchSearch =
         std.isNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         std.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -315,7 +353,7 @@ function StandardsExplorerContent() {
 
       return matchSearch && matchCategory && matchMandatory;
     });
-  }, [searchQuery, selectedCategory, filterMandatoryOnly]);
+  }, [standards, searchQuery, selectedCategory, filterMandatoryOnly]);
 
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">

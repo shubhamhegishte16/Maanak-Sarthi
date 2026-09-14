@@ -248,9 +248,7 @@ Respond strictly with a valid JSON object matching the defined schema.`;
 
   const candidateModels = [
     'gemini-3.5-flash-lite',
-    config.geminiModel,
-    'gemini-2.0-flash-lite',
-  ].filter(Boolean);
+  ];
 
   for (const modelName of candidateModels) {
     try {

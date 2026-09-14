@@ -18,9 +18,11 @@ import {
   FlaskConical, 
   ShieldCheck,
   RefreshCw,
-  Scale
+  Scale,
+  Sparkles
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { publicApi } from "@/lib/api";
 
 interface ComparisonStandard {
   isNumber: string;
@@ -143,10 +145,36 @@ const COMPARISON_PAIRS: { label: string; stdA: ComparisonStandard; stdB: Compari
 export default function CompareStandardsPage() {
   const { t } = useLanguage();
   const [selectedPairIndex, setSelectedPairIndex] = useState(0);
+  const [customStdA, setCustomStdA] = useState("");
+  const [customStdB, setCustomStdB] = useState("");
+  const [isComparing, setIsComparing] = useState(false);
+  const [dynamicPair, setDynamicPair] = useState<any | null>(null);
 
-  const currentPair = COMPARISON_PAIRS[selectedPairIndex];
+  const currentPair = dynamicPair || COMPARISON_PAIRS[selectedPairIndex];
   const stdA = currentPair.stdA;
   const stdB = currentPair.stdB;
+
+  const handleCustomCompare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customStdA.trim() || !customStdB.trim()) return;
+
+    setIsComparing(true);
+    try {
+      const res = await publicApi.compareStandards(customStdA.trim(), customStdB.trim());
+      if (res.data.success && res.data.comparison) {
+        setDynamicPair(res.data.comparison);
+      }
+    } catch (err) {
+      console.error("Comparison failed:", err);
+    } finally {
+      setIsComparing(false);
+    }
+  };
+
+  const handleSelectPreset = (idx: number) => {
+    setDynamicPair(null);
+    setSelectedPairIndex(idx);
+  };
 
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">
@@ -162,18 +190,50 @@ export default function CompareStandardsPage() {
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
+        {/* Dynamic AI Custom Standard Comparison Input */}
+        <div className="mb-8 p-5 bg-white rounded-3xl border border-bis-border shadow-custom-sm">
+          <span className="text-xs font-semibold text-bis-slate uppercase tracking-wider block mb-3">
+            Compare Any Two Standards with Gemini AI:
+          </span>
+          <form onSubmit={handleCustomCompare} className="flex flex-col sm:flex-row items-center gap-3">
+            <input
+              type="text"
+              placeholder="e.g. IS 302 or IS 456"
+              value={customStdA}
+              onChange={(e) => setCustomStdA(e.target.value)}
+              className="w-full sm:w-1/3 px-4 py-2.5 rounded-2xl border border-bis-border text-xs focus:outline-none focus:border-bis-burgundy bg-bis-cream/50"
+            />
+            <span className="text-xs font-bold text-bis-slate-muted">VS</span>
+            <input
+              type="text"
+              placeholder="e.g. IS 16046 or IS 2062"
+              value={customStdB}
+              onChange={(e) => setCustomStdB(e.target.value)}
+              className="w-full sm:w-1/3 px-4 py-2.5 rounded-2xl border border-bis-border text-xs focus:outline-none focus:border-bis-burgundy bg-bis-cream/50"
+            />
+            <button
+              type="submit"
+              disabled={isComparing || !customStdA.trim() || !customStdB.trim()}
+              className="w-full sm:w-auto px-5 py-2.5 bg-bis-burgundy hover:bg-bis-burgundy-light text-white text-xs font-bold rounded-2xl transition-all shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isComparing ? "Analyzing with AI..." : "Compare with Gemini"}</span>
+            </button>
+          </form>
+        </div>
+
         {/* Preset Selector */}
         <div className="mb-8">
           <span className="text-xs font-semibold text-bis-slate-muted uppercase tracking-wider block mb-3">
-            {t("compareSelectPair", "Select Comparison Pair:")}
+            {t("compareSelectPair", "Or select verified benchmark pairs:")}
           </span>
           <div className="flex flex-wrap gap-2.5">
             {COMPARISON_PAIRS.map((pair, idx) => (
               <button
                 key={idx}
-                onClick={() => setSelectedPairIndex(idx)}
+                onClick={() => handleSelectPreset(idx)}
                 className={`px-4 py-2 rounded-2xl text-xs font-semibold border transition-all flex items-center space-x-2 ${
-                  selectedPairIndex === idx
+                  !dynamicPair && selectedPairIndex === idx
                     ? "bg-bis-burgundy text-white border-bis-burgundy shadow-sm"
                     : "bg-white hover:bg-bis-cream-dark text-bis-slate border-bis-border"
                 }`}

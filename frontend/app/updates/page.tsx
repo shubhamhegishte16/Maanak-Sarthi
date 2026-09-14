@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -21,6 +21,7 @@ import {
   CheckCheck
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { publicApi } from "@/lib/api";
 
 type AlertCategory = "All" | "QCO" | "Amendments" | "Standards" | "Certification" | "Laboratories";
 
@@ -103,6 +104,20 @@ export default function UpdatesAlertsPage() {
   const [alerts, setAlerts] = useState<AlertNotification[]>(INITIAL_ALERTS);
   const [selectedCategory, setSelectedCategory] = useState<AlertCategory>("All");
   const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
+
+  useEffect(() => {
+    async function loadUpdates() {
+      try {
+        const res = await publicApi.getUpdates();
+        if (res.data.success && Array.isArray(res.data.updates) && res.data.updates.length > 0) {
+          setAlerts(res.data.updates);
+        }
+      } catch (err) {
+        console.error("Failed to fetch live updates:", err);
+      }
+    }
+    loadUpdates();
+  }, []);
 
   const filteredAlerts = alerts.filter((item) => {
     const matchCat = selectedCategory === "All" || item.category === selectedCategory;

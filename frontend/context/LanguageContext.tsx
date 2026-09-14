@@ -508,7 +508,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     footerLinkStandards: "Standards Directory",
     footerLinkAlerts: "Gazette Alerts",
     footerLinkLabs: "Testing Laboratories",
-    footerLinkAssistant: "AI Guidance",\n
+    footerLinkAssistant: "AI Guidance",
     // Additional Missing Translations
     adminSubQco: "Issue a statutory QCO mandate into the compliance index.",
     adminSubScheme: "Define a new BIS conformity assessment scheme into the system registry.",
@@ -1079,7 +1079,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     footerLinkStandards: "मानक निर्देशिका",
     footerLinkAlerts: "राजपत्र अलर्ट",
     footerLinkLabs: "परीक्षण प्रयोगशालाएं",
-    footerLinkAssistant: "एआई मार्गदर्शन",\n
+    footerLinkAssistant: "एआई मार्गदर्शन",
     adminSubQco: "अनुपालन अनुक्रमणिकेत वैधानिक QCO आदेश जारी करा.",
     adminSubScheme: "सिस्टीम रजिस्ट्रीमध्ये नवीन BIS अनुरूपता मूल्यमापन योजना परिभाषित करा.",
     adminSubStandard: "डिरेक्टरीमध्ये नवीन भारतीय मानक किंवा सुधारणा नोंदवा.",
@@ -1649,7 +1649,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     footerLinkStandards: "मानक सूची",
     footerLinkAlerts: "राजपत्र अलर्ट्स",
     footerLinkLabs: "चाचणी प्रयोगशाळा",
-    footerLinkAssistant: "एआय मार्गदर्शन",\n
+    footerLinkAssistant: "एआय मार्गदर्शन",
     adminSubQco: "अनुपालन निर्देशांकात वैधानिक QCO आदेश जारी करा.",
     adminSubScheme: "सिस्टीम रजिस्ट्रीमध्ये नवीन BIS अनुरूपता मूल्यांकन योजना परिभाषित करा.",
     adminSubStandard: "निर्देशिकेत नवीन भारतीय मानक किंवा सुधारणा नोंदवा.",
@@ -2219,7 +2219,7 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     footerLinkStandards: "ప్రమాణాల డైరెక్టరీ",
     footerLinkAlerts: "గెజిట్ హెచ్చరికలు",
     footerLinkLabs: "పరీక్షా ప్రయోగశాలలు",
-    footerLinkAssistant: "ఏఐ మార్గదర్శకత్వం",\n
+    footerLinkAssistant: "ఏఐ మార్గదర్శకత్వం",
     adminSubQco: "సమ్మతి సూచికలో చట్టబద్ధమైన QCO ఆదేశాన్ని జారీ చేయండి.",
     adminSubScheme: "సిస్టమ్ రిజిస్ట్రీలో కొత్త BIS కన్ఫర్మిటీ అసెస్‌మెంట్ స్కీమ్‌ను నిర్వచించండి.",
     adminSubStandard: "డైరెక్టరీలో కొత్త భారతీయ ప్రమాణం లేదా సవరణను నమోదు చేయండి.",

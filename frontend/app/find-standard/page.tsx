@@ -178,31 +178,17 @@ export default function FindStandardPage() {
     setHasSearched(true);
 
     try {
-      const res = await publicApi.searchStandards(productName || description);
-      if (res.data.success) {
-        const mapped = res.data.standards.map((s: any) => ({
-          id: s.id,
-          isNumber: s.is_number,
-          title: s.title,
-          year: s.last_revised || '2024',
-          status: 'mandatory_qco' as StandardStatus, // Mocking these fields for UI since our DB schema is simple
-          scopeRelevance: `Direct match for ${s.sector} sector requirements based on standard classification.`,
-          confidence: "high" as any,
-          mandatoryQCO: true,
-          qcoReference: `${s.sector} (Quality Control) Order`,
-          relatedStandards: [],
-          keyRequirements: [
-            `Standard compliance for ${s.sector}`,
-            "Quality verification parameters"
-          ],
-          evidenceExcerpt: `As per official notification, products classified under ${s.is_number} must comply with defined parameters.`,
-        }));
-        // Fallback to MOCK if empty DB for demonstration (since find-standard relies heavily on AI generation mock)
-        if (mapped.length > 0) {
-          setResults(mapped);
-        } else {
-          setResults(MOCK_RESULTS.default);
-        }
+      const res = await publicApi.findApplicableStandard({
+        productName: productName.trim(),
+        description: description.trim(),
+        material: material.trim(),
+        industry: industry.trim(),
+        intendedUse: intendedUse.trim(),
+      });
+      if (res.data.success && Array.isArray(res.data.results) && res.data.results.length > 0) {
+        setResults(res.data.results);
+      } else {
+        setResults(MOCK_RESULTS.default);
       }
     } catch (err) {
       console.error(err);

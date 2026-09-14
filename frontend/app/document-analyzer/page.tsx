@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -18,10 +18,11 @@ import {
   ArrowRight, 
   Send, 
   Search, 
-  RotateCcw,
-  ShieldCheck
+  RotateCcw, 
+  ShieldCheck 
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { documentApi } from "@/lib/api";
 
 interface SampleDocument {
   id: string;
@@ -108,6 +109,8 @@ export default function DocumentAnalyzerPage() {
   const [userQuestion, setUserQuestion] = useState("");
   const [qaHistory, setQaHistory] = useState<{ q: string; a: string }[]>([]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleSelectPreset = (doc: SampleDocument) => {
     setIsUploading(true);
     setActiveDoc(null);
@@ -118,31 +121,62 @@ export default function DocumentAnalyzerPage() {
     }, 450);
   };
 
-  const handleSimulatedUpload = () => {
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setIsUploading(true);
     setActiveDoc(null);
     setQaHistory([]);
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await documentApi.analyzeDocument(formData);
+      if (res.data.success && res.data.document) {
+        setActiveDoc(res.data.document);
+      } else {
+        setActiveDoc(SAMPLE_DOCS[0]);
+      }
+    } catch (err) {
+      console.error('File analysis failed, using fallback:', err);
       setActiveDoc(SAMPLE_DOCS[0]);
+    } finally {
       setIsUploading(false);
-    }, 600);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
-  const handleAskQuestion = (e: React.FormEvent) => {
+  const handleAskQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userQuestion.trim() || !activeDoc) return;
 
     const q = userQuestion;
     setUserQuestion("");
 
-    let reply = `Based on our AI-assisted parsing of "${activeDoc.name}", this document references ${activeDoc.identifiedStandards[0]?.isNumber}. The document outlines mandatory compliance requirements subject to official verification with BIS gazette notifications.`;
+    try {
+      const res = await documentApi.askQuestion({
+        id: activeDoc.id,
+        question: q,
+        history: qaHistory,
+        docName: activeDoc.name,
+        docText: `${activeDoc.title}. ${activeDoc.summary}. Identified standards: ${activeDoc.identifiedStandards?.map((s) => s.isNumber).join(', ')}. Requirements: ${activeDoc.requirements?.join('. ')}`,
+      });
 
+      if (res.data.success && res.data.answer) {
+        setQaHistory((prev) => [...prev, { q, a: res.data.answer }]);
+        return;
+      }
+    } catch (err) {
+      console.error("Gemini QA failed, using intelligent fallback:", err);
+    }
+
+    let reply = `Based on our AI-assisted parsing of "${activeDoc.name}", this document references ${activeDoc.identifiedStandards[0]?.isNumber}. The document outlines mandatory compliance requirements subject to official verification with BIS gazette notifications.`;
     if (q.toLowerCase().includes("micro") || q.toLowerCase().includes("deadline")) {
       reply = `According to the parsed timeline in this document, Micro and Small Enterprises have extended compliance deadlines (up to 6 additional months) compared to large manufacturers. Please check Order Paragraph 5.`;
     } else if (q.toLowerCase().includes("scheme")) {
       reply = `This document specifies compliance under Scheme-I of Schedule-II (Standard ISI Mark Scheme), requiring factory audit and laboratory test report verification.`;
     }
-
     setQaHistory((prev) => [...prev, { q, a: reply }]);
   };
 
@@ -189,8 +223,15 @@ export default function DocumentAnalyzerPage() {
           <div className="lg:col-span-4 space-y-6">
             
             {/* Upload Box */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelected}
+              accept=".pdf,.doc,.docx,.txt"
+              className="hidden"
+            />
             <div 
-              onClick={handleSimulatedUpload}
+              onClick={() => fileInputRef.current?.click()}
               className="bg-white p-6 rounded-3xl border-2 border-dashed border-bis-border hover:border-bis-burgundy transition-all text-center cursor-pointer group shadow-custom-sm"
             >
               <div className="w-12 h-12 rounded-2xl bg-bis-cream-dark text-bis-burgundy flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -204,6 +245,10 @@ export default function DocumentAnalyzerPage() {
               </p>
               <button
                 type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 className="mt-4 px-4 py-2 bg-bis-cream hover:bg-bis-cream-dark border border-bis-border text-bis-slate text-xs font-semibold rounded-full transition-all"
               >
                 {t("docSelectFile", "Select Local File")}

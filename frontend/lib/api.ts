@@ -102,11 +102,60 @@ export const adminApi = {
 };
 
 export const publicApi = {
-  getLabs: () => api.get('/api/public/labs'),
+  getLabs: (params?: { q?: string; state?: string; category?: string; standard?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.q) query.append('q', params.q);
+    if (params?.state && params.state !== 'All States') query.append('state', params.state);
+    if (params?.category && params.category !== 'All Domains') query.append('category', params.category);
+    if (params?.standard) query.append('standard', params.standard);
+    const qs = query.toString();
+    return api.get(`/api/public/labs${qs ? `?${qs}` : ''}`);
+  },
+  getStandards: (params?: { q?: string; sector?: string; status?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.q) query.append('q', params.q);
+    if (params?.sector && params.sector !== 'All Sectors') query.append('sector', params.sector);
+    if (params?.status && params.status !== 'All Status') query.append('status', params.status);
+    const qs = query.toString();
+    return api.get(`/api/public/standards${qs ? `?${qs}` : ''}`);
+  },
+  getStandardById: (id: string) => api.get(`/api/public/standards/${encodeURIComponent(id)}`),
   searchStandards: (q: string) => api.get(`/api/public/standards/search?q=${encodeURIComponent(q)}`),
+  findApplicableStandard: (data: { productName: string; description: string; material?: string; industry?: string; intendedUse?: string }) =>
+    api.post('/api/public/standards/find-applicable', data),
+  getSchemes: () => api.get('/api/public/schemes'),
+  getSchemeById: (id: string) => api.get(`/api/public/schemes/${encodeURIComponent(id)}`),
+  getUpdates: (category?: string) => api.get(`/api/public/updates${category && category !== 'All' ? `?category=${encodeURIComponent(category)}` : ''}`),
+  compareStandards: (stdA: string, stdB: string) => api.get(`/api/public/standards/compare?stdA=${encodeURIComponent(stdA)}&stdB=${encodeURIComponent(stdB)}`),
+};
+
+export const documentApi = {
+  analyzeDocument: (formData: FormData) =>
+    api.post('/api/documents/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  analyzeText: (text: string, name?: string) =>
+    api.post('/api/documents/analyze', { text, name }),
+  askQuestion: (data: { id?: string; question: string; history?: { q: string; a: string }[]; docText?: string; docName?: string }) =>
+    api.post('/api/documents/ask', data),
+  getDocuments: () => api.get('/api/documents'),
+};
+
+export const userApi = {
+  getDashboard: () => api.get('/api/user/dashboard'),
+  getSavedStandards: () => api.get('/api/user/saved-standards'),
+  toggleSaveStandard: (standardId: string) => api.post('/api/user/saved-standards/toggle', { standardId }),
+  getProducts: () => api.get('/api/user/products'),
+  createProduct: (data: { name: string; model?: string; standard_number?: string }) => api.post('/api/user/products', data),
+  getReadiness: (productId?: string) => api.get(`/api/user/readiness${productId ? `?productId=${encodeURIComponent(productId)}` : ''}`),
+  updateReadinessTask: (data: { productId?: string; pillarTitle: string; task: string; status: string; note?: string }) =>
+    api.post('/api/user/readiness/update', data),
+  getCompliance: (standard?: string) => api.get(`/api/user/compliance${standard ? `?standard=${encodeURIComponent(standard)}` : ''}`),
+  saveCompliance: (data: any) => api.post('/api/user/compliance/save', data),
 };
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) return error.response?.data?.message || fallback;
   return fallback;
-}
+}
+

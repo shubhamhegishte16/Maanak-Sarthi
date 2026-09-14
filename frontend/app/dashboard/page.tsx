@@ -27,6 +27,7 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth, roleLabels } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { userApi } from "@/lib/api";
 
 export default function DashboardPage() {
   const { t } = useLanguage();
@@ -34,31 +35,69 @@ export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "standards" | "compliance" | "docs">("overview");
 
-  useEffect(() => {
-    if (!loading && !user) router.replace("/");
-  }, [loading, user, router]);
-
-  const savedStandards = [
+  const [savedStandards, setSavedStandards] = useState<any[]>([
     { isNumber: "IS 302 (Part 2/Sec 21):2018", title: "Safety of Household Electric Water Heaters", status: "mandatory_qco" as StandardStatus, dateAdded: "02 Sep 2026", scheme: "Scheme I (ISI)" },
     { isNumber: "IS 16046 (Part 2):2018", title: "Secondary Lithium Cells & Batteries for Portable Applications", status: "mandatory_crs" as StandardStatus, dateAdded: "28 Aug 2026", scheme: "Scheme II (CRS)" },
     { isNumber: "IS 17526:2021", title: "Stainless Steel Vacuum Flasks and Insulated Bottles", status: "mandatory_qco" as StandardStatus, dateAdded: "15 Aug 2026", scheme: "Scheme I (ISI)" },
-  ];
+  ]);
 
-  const recentSearches = [
+  const [recentSearches, setRecentSearches] = useState<any[]>([
     { query: "Stainless steel water bottle DPIIT QCO timeline", timestamp: "Yesterday, 4:20 PM", module: "AI Assistant", href: "/assistant" },
     { query: "Secondary lithium cell overcharge testing clause", timestamp: "3 days ago", module: "Document Analyzer", href: "/document-analyzer" },
     { query: "NABL accredited labs in Maharashtra for IS 302", timestamp: "5 days ago", module: "BIS Lab Finder", href: "/labs" },
-  ];
+  ]);
 
-  const savedProducts = [
+  const [savedProducts, setSavedProducts] = useState<any[]>([
     { name: "Instant Electric Geyser 15L", model: "ACM-EG-15", standard: "IS 302 (Part 2/Sec 21)", readiness: "78%", status: "Docs In Review" },
     { name: "Portable Power Bank 20000mAh", model: "ACM-PB-20K", standard: "IS 16046 (Part 2)", readiness: "92%", status: "Lab Report Validated" },
-  ];
+  ]);
 
-  const recentAlerts = [
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([
     { title: "Amendment 2 Published for IS 302 Part 2", date: "08 Sep 2026", category: "Standard Revision", unread: true },
     { title: "Gazette Enforcement Deadline approaching for Cookware QCO", date: "04 Sep 2026", category: "QCO Notification", unread: false },
-  ];
+  ]);
+
+  const [stats, setStats] = useState({ activeTrackedCount: 3, averageReadiness: 85 });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+      return;
+    }
+
+    if (user) {
+      userApi.getDashboard().then((res) => {
+        if (res.data.success) {
+          if (Array.isArray(res.data.savedStandards) && res.data.savedStandards.length > 0) {
+            setSavedStandards(res.data.savedStandards.map((s: any) => ({
+              isNumber: s.is_number || s.isNumber,
+              title: s.title,
+              status: (s.status as StandardStatus) || 'mandatory_qco',
+              dateAdded: s.dateAdded || 'Recent',
+              scheme: s.scheme || 'Scheme I (ISI)',
+            })));
+          }
+          if (Array.isArray(res.data.savedProducts) && res.data.savedProducts.length > 0) {
+            setSavedProducts(res.data.savedProducts.map((p: any) => ({
+              name: p.name,
+              model: p.model || 'MOD-1',
+              standard: p.standard_number || p.standard || 'IS Standard',
+              readiness: `${p.readiness_percent || p.readiness || 80}%`,
+              status: p.status || 'Docs In Review',
+            })));
+          }
+          if (Array.isArray(res.data.recentSearches) && res.data.recentSearches.length > 0) {
+            setRecentSearches(res.data.recentSearches);
+          }
+          if (res.data.stats) {
+            setStats(res.data.stats);
+          }
+        }
+      }).catch((err) => {
+        console.error("Dashboard fetch error:", err);
+      });
+    }
+  }, [loading, user, router]);
 
   if (loading || !user) return <main className="min-h-screen bg-bis-cream" />;
 
@@ -111,11 +150,11 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-3 text-xs">
             <div className="p-3 rounded-2xl bg-bis-cream border border-bis-border text-center">
               <span className="text-[10px] text-bis-slate-muted uppercase block">{t("dashTrackedCount", "Active Tracked Standards")}</span>
-              <span className="font-mono text-base font-bold text-bis-burgundy">3 Standards</span>
+              <span className="font-mono text-base font-bold text-bis-burgundy">{stats.activeTrackedCount} Standards</span>
             </div>
             <div className="p-3 rounded-2xl bg-bis-cream border border-bis-border text-center">
               <span className="text-[10px] text-bis-slate-muted uppercase block">{t("dashPortfolioAvg", "Average Readiness")}</span>
-              <span className="font-mono text-base font-bold text-bis-sage-dark">85%</span>
+              <span className="font-mono text-base font-bold text-bis-sage-dark">{stats.averageReadiness}%</span>
             </div>
           </div>
         </div>

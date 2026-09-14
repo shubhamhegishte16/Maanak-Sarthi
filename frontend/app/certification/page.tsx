@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -23,6 +23,7 @@ import {
   Layers
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { publicApi } from "@/lib/api";
 
 interface CertificationScheme {
   id: string;
@@ -129,9 +130,44 @@ const CERT_SCHEMES: CertificationScheme[] = [
 
 export default function CertificationNavigatorPage() {
   const { t } = useLanguage();
+  const [schemes, setSchemes] = useState<CertificationScheme[]>(CERT_SCHEMES);
   const [selectedSchemeId, setSelectedSchemeId] = useState("isi");
 
-  const currentScheme = CERT_SCHEMES.find((s) => s.id === selectedSchemeId) || CERT_SCHEMES[0];
+  useEffect(() => {
+    async function loadSchemes() {
+      try {
+        const res = await publicApi.getSchemes();
+        if (res.data.success && Array.isArray(res.data.schemes) && res.data.schemes.length > 0) {
+          const mapped: CertificationScheme[] = res.data.schemes.map((s: any) => ({
+            id: s.scheme_id || s.id,
+            name: s.name,
+            schedule: s.schedule || 'Conformity Assessment Regulations',
+            badge: s.badge || s.sector || 'Mandatory Standard Mark',
+            shortDesc: s.short_desc || s.name,
+            productExamples: Array.isArray(s.product_examples) ? s.product_examples : [],
+            mandatoryNote: s.status === 'Active' ? 'Active standard scheme under BIS Act.' : 'Voluntary standard scheme.',
+            steps: Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : (CERT_SCHEMES.find(cs => cs.id === s.scheme_id)?.steps || []),
+            requiredDocs: Array.isArray(s.required_docs) && s.required_docs.length > 0 ? s.required_docs : (CERT_SCHEMES.find(cs => cs.id === s.scheme_id)?.requiredDocs || []),
+            testingProtocol: s.testing_protocol || 'Testing at BIS recognized laboratory.',
+            factoryAudit: s.factory_audit || 'Physical audit by BIS technical officers.',
+            estimatedTimeline: s.estimated_timeline || '30-45 Days',
+            officialRef: s.official_ref || 'BIS Conformity Assessment Regulations'
+          }));
+
+          setSchemes((prev) => {
+            const ids = new Set(mapped.map(m => m.id));
+            const remaining = prev.filter(p => !ids.has(p.id));
+            return [...mapped, ...remaining];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch live schemes:", err);
+      }
+    }
+    loadSchemes();
+  }, []);
+
+  const currentScheme = schemes.find((s) => s.id === selectedSchemeId) || schemes[0];
 
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">
@@ -157,7 +193,7 @@ export default function CertificationNavigatorPage() {
 
         {/* Scheme Selector Tabs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {CERT_SCHEMES.map((scheme) => (
+          {schemes.map((scheme) => (
             <button
               key={scheme.id}
               onClick={() => setSelectedSchemeId(scheme.id)}
