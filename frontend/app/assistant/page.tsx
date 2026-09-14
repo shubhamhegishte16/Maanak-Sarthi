@@ -6,7 +6,6 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageHeader from "@/components/shared/PageHeader";
-import EvidenceCard from "@/components/shared/EvidenceCard";
 import ConfidenceBadge from "@/components/shared/ConfidenceBadge";
 import { 
   Send, 
@@ -19,19 +18,27 @@ import {
   BookOpen, 
   FlaskConical, 
   Settings, 
-  RefreshCw,
-  AlertCircle,
-  HelpCircle,
-  Copy,
-  Check
+  RefreshCw, 
+  AlertCircle, 
+  HelpCircle, 
+  Copy, 
+  Check,
+  ExternalLink,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+  MessageSquare
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { chatApi, type ChatMessage, type ChatSession } from "@/lib/api";
 
 interface AssistantMessage {
   id: string;
   sender: "user" | "assistant";
   timestamp: string;
   text: string;
+  mode?: "bis_grounded" | "general" | "clarification";
+  intent?: string;
   evidence?: {
     sourceTitle: string;
     documentNumber?: string;
@@ -40,11 +47,22 @@ interface AssistantMessage {
     verifiedDate?: string;
     confidence: "high" | "medium" | "low";
   };
+  sources?: {
+    title: string;
+    url: string;
+    domain: string;
+    documentNumber?: string;
+    clause?: string;
+    excerpt?: string;
+    confidence: "high" | "medium" | "low";
+  }[];
   actions?: {
     label: string;
     href: string;
     icon: "standard" | "certification" | "lab";
   }[];
+  followUpQuestions?: string[];
+  disclaimer?: string;
 }
 
 const INITIAL_MESSAGES: AssistantMessage[] = [
@@ -52,7 +70,7 @@ const INITIAL_MESSAGES: AssistantMessage[] = [
     id: "m1",
     sender: "assistant",
     timestamp: "10:30 AM",
-    text: "Namaste! I am your MANAK SAARTHI AI Assistant. I provide source-grounded guidance on Indian Standards (IS), Quality Control Orders (QCOs), testing protocols, and BIS certification schemes. How can I assist your compliance journey today?",
+    text: "Namaste! I am your MANAK SAARTHI AI Assistant. I provide source-grounded guidance on Indian Standards (IS), Quality Control Orders (QCOs), testing protocols, and BIS certification schemes, as well as general AI inquiries. How can I assist you today?",
     actions: [
       { label: "Find My Standard", href: "/find-standard", icon: "standard" },
       { label: "Certification Navigator", href: "/certification", icon: "certification" },
@@ -62,9 +80,11 @@ const INITIAL_MESSAGES: AssistantMessage[] = [
 ];
 
 const PRESET_TOPICS = [
+  "What BIS standards apply to opening a cake shop or bakery?",
   "Does my electric water heater require mandatory BIS certification?",
   "What Indian Standard applies to lithium-ion batteries?",
-  "Where can I test electrical appliances for IS 302 safety?",
+  "What is IS 17526?",
+  "What is HUID in gold jewellery hallmarking?",
   "Explain Scheme I (ISI) vs Scheme II (CRS) certification",
 ];
 
@@ -75,7 +95,23 @@ function AIAssistantContent() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, "positive" | "negative">>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat sessions on mount
+  useEffect(() => {
+    chatApi.getChats()
+      .then((res) => {
+        if (res.data?.sessions) {
+          setSessions(res.data.sessions);
+        }
+      })
+      .catch(() => {
+        // Silently continue for guest sessions
+      });
+  }, []);
 
   // Handle URL pre-filled query (e.g. from homepage search)
   useEffect(() => {
@@ -89,96 +125,114 @@ function AIAssistantContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleUserSubmit = (queryText: string) => {
-    if (!queryText.trim()) return;
+  const handleUserSubmit = async (queryText: string) => {
+    if (!queryText.trim() || isTyping) return;
 
     const userMsg: AssistantMessage = {
       id: Date.now().toString(),
       sender: "user",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      text: queryText,
+      text: queryText.trim(),
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
-    // Simulated intelligent source-grounded AI reply
-    setTimeout(() => {
-      let reply: AssistantMessage;
-      const lower = queryText.toLowerCase();
+    try {
+      const response = await chatApi.sendMessage({
+        sessionId: sessionId ?? undefined,
+        message: queryText.trim(),
+      });
 
-      if (lower.includes("water heater") || lower.includes("geyser") || lower.includes("is 302")) {
-        reply = {
-          id: (Date.now() + 1).toString(),
-          sender: "assistant",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          text: "Yes, electric water heaters (storage and instantaneous) fall under mandatory BIS certification in India. Domestic manufacturers and importers must comply with Indian Standard IS 302 (Part 2/Sec 21) under the Electrical Appliances Quality Control Order.",
-          evidence: {
-            sourceTitle: "BIS Quality Control Order (QCO) Gazette Notification",
-            documentNumber: "IS 302 (Part 2/Sec 21):2018",
-            clause: "Clause 6.2 (Electrical Insulation & Pressure Safety)",
-            excerpt: "Electric storage water heaters shall be manufactured, imported, stored, or sold only under a valid BIS standard mark licence as per Scheme-I of Schedule-II.",
-            verifiedDate: "05/09/2026",
-            confidence: "high",
-          },
-          actions: [
-            { label: "View IS 302 in Standards Explorer", href: "/standards?query=IS+302", icon: "standard" },
-            { label: "View Scheme I Certification Steps", href: "/certification?scheme=isi", icon: "certification" },
-            { label: "Locate Electrical Testing Labs", href: "/labs?test=electrical", icon: "lab" },
-          ],
-        };
-      } else if (lower.includes("battery") || lower.includes("lithium") || lower.includes("16046")) {
-        reply = {
-          id: (Date.now() + 1).toString(),
-          sender: "assistant",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          text: "Secondary cells and batteries containing alkaline or other non-acid electrolytes (lithium systems) for portable applications are covered under IS 16046 (Part 2):2018. This category requires mandatory Compulsory Registration Scheme (CRS) marking under MeitY / BIS notification.",
-          evidence: {
-            sourceTitle: "Ministry of Electronics and Information Technology (MeitY) QCO",
-            documentNumber: "IS 16046 (Part 2):2018 / IEC 62133-2",
-            clause: "Clause 5.3 (Short Circuit & Thermal Abuse Limits)",
-            excerpt: "All portable electronics battery assemblies must obtain CRS registration from BIS following testing at recognized laboratory.",
-            verifiedDate: "01/09/2026",
-            confidence: "high",
-          },
-          actions: [
-            { label: "Inspect IS 16046 Specification", href: "/standards?query=IS+16046", icon: "standard" },
-            { label: "CRS Registration Workflow", href: "/certification?scheme=crs", icon: "certification" },
-            { label: "Find NABL Battery Labs", href: "/labs?test=battery", icon: "lab" },
-          ],
-        };
-      } else {
-        reply = {
-          id: (Date.now() + 1).toString(),
-          sender: "assistant",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          text: `Based on your query regarding "${queryText}", our standards index indicates potential relevance to active Indian Standards and QCO gazette mandates. Please review the referenced clause and verify testing readiness.`,
-          evidence: {
-            sourceTitle: "Bureau of Indian Standards Catalog Reference",
-            documentNumber: "IS Standard Reference Index",
-            clause: "Section 4.1 (Product Scope & Conformity)",
-            excerpt: "Products within this category are subject to verification against published standards and applicable Quality Control Orders.",
-            verifiedDate: "01/09/2026",
-            confidence: "medium",
-          },
-          actions: [
-            { label: "Find Specific Standard", href: "/find-standard", icon: "standard" },
-            { label: "Check Certification Scheme", href: "/certification", icon: "certification" },
-            { label: "Locate Recognized Lab", href: "/labs", icon: "lab" },
-          ],
-        };
+      const data = response.data;
+      if (data?.sessionId) {
+        setSessionId(data.sessionId);
       }
 
-      setMessages((prev) => [...prev, reply]);
+      const assistantMsg = data.message;
+      const formattedReply: AssistantMessage = {
+        id: assistantMsg.id,
+        sender: "assistant",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        text: assistantMsg.content,
+        mode: assistantMsg.mode,
+        intent: assistantMsg.intent,
+        evidence: assistantMsg.evidence,
+        sources: assistantMsg.sources,
+        actions: assistantMsg.actions,
+        followUpQuestions: assistantMsg.followUpQuestions,
+        disclaimer: assistantMsg.disclaimer,
+      };
+
+      setMessages((prev) => [...prev, formattedReply]);
+
+      // Refresh recent sessions
+      chatApi.getChats()
+        .then((res) => {
+          if (res.data?.sessions) setSessions(res.data.sessions);
+        })
+        .catch(() => {});
+    } catch (err: unknown) {
+      const fallbackReply: AssistantMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: "assistant",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        text: "The AI service is temporarily unavailable or unable to reach the official verification index. Please verify your connection and try again.",
+      };
+      setMessages((prev) => [...prev, fallbackReply]);
+    } finally {
       setIsTyping(false);
-    }, 700);
+    }
   };
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleFeedback = async (msgId: string, rating: "positive" | "negative") => {
+    try {
+      setFeedbackGiven((prev) => ({ ...prev, [msgId]: rating }));
+      await chatApi.submitFeedback(msgId, rating);
+    } catch {
+      // Non-blocking UI
+    }
+  };
+
+  const handleNewChat = () => {
+    setSessionId(null);
+    setMessages(INITIAL_MESSAGES);
+  };
+
+  const handleLoadSession = async (sId: string) => {
+    if (sId === sessionId) return;
+    setIsTyping(true);
+    try {
+      const res = await chatApi.getChatMessages(sId);
+      if (res.data?.messages && res.data.messages.length > 0) {
+        setSessionId(sId);
+        const mapped: AssistantMessage[] = res.data.messages.map((m) => ({
+          id: m.id,
+          sender: m.role as "user" | "assistant",
+          timestamp: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Earlier",
+          text: m.content,
+          mode: m.mode,
+          intent: m.intent,
+          evidence: m.evidence,
+          sources: m.sources,
+          actions: m.actions,
+          followUpQuestions: m.followUpQuestions,
+          disclaimer: m.disclaimer,
+        }));
+        setMessages(mapped);
+      }
+    } catch {
+      // Keep current state
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -213,14 +267,25 @@ function AIAssistantContent() {
                 </span>
               </div>
 
-              <button
-                onClick={() => setMessages(INITIAL_MESSAGES)}
-                className="text-bis-slate-muted hover:text-bis-burgundy text-xs flex items-center space-x-1 transition-colors"
-                title="Reset Conversation"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t("reset", "Reset")}</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleNewChat}
+                  className="text-bis-burgundy hover:bg-bis-burgundy/10 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 transition-colors"
+                  title="Start New Chat"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Chat</span>
+                </button>
+
+                <button
+                  onClick={() => setMessages(INITIAL_MESSAGES)}
+                  className="text-bis-slate-muted hover:text-bis-burgundy text-xs flex items-center space-x-1 transition-colors px-2 py-1"
+                  title="Reset Conversation"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t("reset", "Reset")}</span>
+                </button>
+              </div>
             </div>
 
             {/* Conversation message feed */}
@@ -240,6 +305,16 @@ function AIAssistantContent() {
                       </span>
                       <span>•</span>
                       <span>{msg.timestamp}</span>
+                      {msg.mode === "bis_grounded" && (
+                        <span className="bg-bis-sage/20 text-bis-sage-dark px-1.5 py-0.2 text-[9px] font-bold rounded">
+                          OFFICIAL BIS
+                        </span>
+                      )}
+                      {msg.mode === "clarification" && (
+                        <span className="bg-amber-100 text-amber-800 px-1.5 py-0.2 text-[9px] font-bold rounded">
+                          CLARIFICATION NEEDED
+                        </span>
+                      )}
                     </div>
 
                     <div
@@ -249,7 +324,7 @@ function AIAssistantContent() {
                           : "bg-bis-cream-card/90 text-bis-slate border border-bis-border rounded-tl-none shadow-custom-sm"
                       }`}
                     >
-                      <p>{messageText}</p>
+                      <div className="whitespace-pre-wrap">{messageText}</div>
 
                       {/* Evidence citation panel on Assistant messages */}
                       {msg.evidence && (
@@ -272,14 +347,53 @@ function AIAssistantContent() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-bis-slate-muted text-[11px]">
-                              {msg.evidence.clause}
-                            </p>
+                            {msg.evidence.clause && (
+                              <p className="text-bis-slate-muted text-[11px]">
+                                {msg.evidence.clause}
+                              </p>
+                            )}
                             {msg.evidence.excerpt && (
                               <p className="text-[11px] text-bis-slate italic bg-bis-cream p-2 rounded border border-bis-border/50 mt-1">
                                 "{msg.evidence.excerpt}"
                               </p>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Official Sources & Gazette Citations */}
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-bis-border/60 space-y-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-bis-slate-muted block">
+                            Verified Sources & Citations:
+                          </span>
+                          <div className="space-y-1.5">
+                            {msg.sources.map((s, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className="bg-white p-2.5 rounded-xl border border-bis-border text-xs flex items-center justify-between gap-2"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-bis-slate truncate">
+                                    {s.title}
+                                  </div>
+                                  <div className="text-[10px] text-bis-slate-muted flex items-center space-x-2">
+                                    <span className="font-mono">{s.domain}</span>
+                                    {s.documentNumber && <span>• {s.documentNumber}</span>}
+                                    {s.clause && <span>• {s.clause}</span>}
+                                  </div>
+                                </div>
+                                <a
+                                  href={s.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-shrink-0 inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-bis-cream hover:bg-bis-cream-dark text-bis-burgundy border border-bis-border transition-colors"
+                                >
+                                  <span>Open Source</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -318,25 +432,79 @@ function AIAssistantContent() {
                           </div>
                         </div>
                       )}
+
+                      {/* Follow-up question pills */}
+                      {msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-bis-border/50">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-bis-slate-muted block mb-1.5">
+                            Suggested Follow-up Inquiries:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {msg.followUpQuestions.map((fq, fqIdx) => (
+                              <button
+                                key={fqIdx}
+                                onClick={() => handleUserSubmit(fq)}
+                                className="text-[11px] bg-white hover:bg-bis-cream text-bis-slate px-2.5 py-1 rounded-full border border-bis-border transition-colors text-left"
+                              >
+                                {fq}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* High-stakes regulatory disclaimer */}
+                      {msg.disclaimer && (
+                        <div className="mt-3 text-[10px] text-bis-slate-muted italic bg-bis-burgundy/5 p-2 rounded-lg border border-bis-burgundy/10">
+                          ⚖️ {msg.disclaimer}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Copy button */}
-                    <button
-                      onClick={() => handleCopy(msg.id, msg.text)}
-                      className="mt-1 text-[10px] text-bis-slate-muted hover:text-bis-burgundy flex items-center space-x-1 px-1 transition-colors"
-                    >
-                      {copiedId === msg.id ? (
-                        <>
-                          <Check className="w-2.5 h-2.5 text-bis-sage" />
-                          <span>{t("copied", "Copied")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-2.5 h-2.5" />
-                          <span>{t("copy", "Copy")}</span>
-                        </>
+                    {/* Bottom action row: Copy & Feedback */}
+                    <div className="flex items-center space-x-3 mt-1 px-1">
+                      <button
+                        onClick={() => handleCopy(msg.id, msg.text)}
+                        className="text-[10px] text-bis-slate-muted hover:text-bis-burgundy flex items-center space-x-1 transition-colors"
+                      >
+                        {copiedId === msg.id ? (
+                          <>
+                            <Check className="w-2.5 h-2.5 text-bis-sage" />
+                            <span>{t("copied", "Copied")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-2.5 h-2.5" />
+                            <span>{t("copy", "Copy")}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {!isUser && (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleFeedback(msg.id, "positive")}
+                            className={`text-[10px] flex items-center space-x-1 hover:text-bis-sage transition-colors ${
+                              feedbackGiven[msg.id] === "positive" ? "text-bis-sage font-bold" : "text-bis-slate-muted"
+                            }`}
+                            title="Helpful response"
+                          >
+                            <ThumbsUp className="w-2.5 h-2.5" />
+                            <span>Helpful</span>
+                          </button>
+                          <button
+                            onClick={() => handleFeedback(msg.id, "negative")}
+                            className={`text-[10px] flex items-center space-x-1 hover:text-red-500 transition-colors ${
+                              feedbackGiven[msg.id] === "negative" ? "text-red-500 font-bold" : "text-bis-slate-muted"
+                            }`}
+                            title="Inaccurate response"
+                          >
+                            <ThumbsDown className="w-2.5 h-2.5" />
+                            <span>Not helpful</span>
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   </div>
                 );
               })}
@@ -344,7 +512,7 @@ function AIAssistantContent() {
               {isTyping && (
                 <div className="flex items-center space-x-2 text-xs text-bis-slate-muted italic p-2">
                   <span className="w-2 h-2 rounded-full bg-bis-burgundy animate-ping" />
-                  <span>Verifying Indian Standards database & citations...</span>
+                  <span>Verifying official BIS records & generating grounded response...</span>
                 </div>
               )}
 
@@ -422,6 +590,34 @@ function AIAssistantContent() {
           {/* Right Column: Source Knowledge & Regulatory Context (4 cols on desktop) */}
           <div className="lg:col-span-4 space-y-5">
             
+            {/* Recent Conversations / Sessions */}
+            {sessions.length > 0 && (
+              <div className="bg-white p-5 rounded-3xl border border-bis-border shadow-custom-sm">
+                <div className="flex items-center space-x-2 text-xs font-bold text-bis-slate uppercase tracking-wider mb-3">
+                  <MessageSquare className="w-4 h-4 text-bis-burgundy" />
+                  <span>Recent Conversations</span>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {sessions.slice(0, 5).map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleLoadSession(s.id)}
+                      className={`w-full text-left p-2.5 rounded-xl border text-xs transition-colors flex items-center justify-between ${
+                        s.id === sessionId
+                          ? "bg-bis-burgundy/10 border-bis-burgundy text-bis-burgundy font-semibold"
+                          : "bg-bis-cream border-bis-border hover:border-bis-burgundy text-bis-slate"
+                      }`}
+                    >
+                      <span className="truncate flex-1 mr-2">{s.title}</span>
+                      <span className="text-[10px] text-bis-slate-muted flex-shrink-0">
+                        {s.message_count} msgs
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Grounding Source Info */}
             <div className="bg-white p-5 rounded-3xl border border-bis-border shadow-custom-sm">
               <div className="flex items-center space-x-2 text-xs font-bold text-bis-slate uppercase tracking-wider mb-3">

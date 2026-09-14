@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [department, setDepartment] = useState("Technical Directorate & Digital Infrastructure");
   const [timezone, setTimezone] = useState("IST (UTC+05:30)");
 
-  const [aiModel, setAiModel] = useState("gemini-1.5-pro");
+  const [aiModel, setAiModel] = useState("gemini-3.5-flash-lite");
   const [threshold, setThreshold] = useState("0.85");
   const [autoIndex, setAutoIndex] = useState(true);
   const [maxCitations, setMaxCitations] = useState("5");
@@ -171,8 +171,8 @@ export default function SettingsPage() {
                   onChange={(e) => setAiModel(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B] focus:ring-2 focus:ring-[#889794]/40 outline-none"
                 >
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (Source Grounded, High Precision)</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast Real-time Response)</option>
+                  <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (Fast Real-time Response & Source Grounding)</option>
+                  <option value="gemini-3.5-flash">Gemini 3.5 Flash (Standard Precision)</option>
                 </select>
               </div>
 

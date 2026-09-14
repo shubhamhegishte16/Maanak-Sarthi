@@ -14,8 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="min-h-screen bg-bis-cream text-bis-slate antialiased selection:bg-bis-burgundy selection:text-white">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-bis-cream text-bis-slate antialiased selection:bg-bis-burgundy selection:text-white"
+      >
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
         </LanguageProvider>

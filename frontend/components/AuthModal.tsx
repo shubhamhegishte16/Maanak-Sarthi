@@ -37,6 +37,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register } = useAuth();
@@ -52,15 +53,38 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+
+    if (mode === "signup") {
+      if (fullName.trim().length < 2) {
+        setErrorMessage("Please enter your full name (at least 2 characters).");
+        return;
+      }
+      if (password.length < 8) {
+        setErrorMessage("Password must be at least 8 characters long.");
+        return;
+      }
+      if (!agreedToTerms) {
+        setErrorMessage("Please accept the Terms of Service and Privacy Policy.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
+      const trimmedPhone = phone.trim();
       const user = mode === "signin"
-        ? await login(email, password, rememberMe)
-        : await register({ name: fullName, email, phone, password, role: selectedRole });
+        ? await login(email.trim(), password, rememberMe)
+        : await register({
+            name: fullName.trim(),
+            email: email.trim(),
+            phone: trimmedPhone ? trimmedPhone : undefined,
+            password,
+            role: selectedRole,
+          });
       onSuccessLogin?.({ name: user.name, role: user.role, email: user.email });
       onClose();
     } catch (error: unknown) {
-      setErrorMessage(getApiErrorMessage(error, "Unable to connect to the authentication service"));
+      setErrorMessage(getApiErrorMessage(error, "Unable to complete authentication request"));
     } finally {
       setIsSubmitting(false);
     }
@@ -147,7 +171,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               <div className="inline-flex p-1 bg-bis-cream-dark/80 rounded-full border border-bis-border">
                 <button
                   type="button"
-                  onClick={() => setMode("signin")}
+                  onClick={() => { setMode("signin"); setErrorMessage(""); }}
                   className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     mode === "signin"
                       ? "bg-bis-burgundy text-white shadow-sm"
@@ -158,7 +182,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMode("signup")}
+                  onClick={() => { setMode("signup"); setErrorMessage(""); }}
                   className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     mode === "signup"
                       ? "bg-bis-burgundy text-white shadow-sm"
@@ -280,6 +304,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-semibold text-bis-slate">
                     Password
+                    {mode === "signup" && (
+                      <span className="text-[10px] text-bis-slate-muted font-normal ml-1.5">(min 8 characters)</span>
+                    )}
                   </label>
                   {mode === "signin" && (
                     <a href="#" className="text-[11px] text-bis-burgundy hover:underline font-medium">
@@ -292,6 +319,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                   <input
                     type={showPassword ? "text" : "password"}
                     required
+                    minLength={mode === "signup" ? 8 : 1}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
@@ -307,10 +335,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                 </div>
               </div>
 
-              {/* Remember Me Checkbox */}
+              {/* Remember Me Checkbox / Terms Checkbox */}
               {mode === "signin" ? (
                 <div className="flex items-center">
                   <input
+                    key="signin-remember-checkbox"
                     type="checkbox"
                     id="remember"
                     checked={rememberMe}
@@ -324,8 +353,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
               ) : (
                 <div className="flex items-start space-x-2">
                   <input
+                    key="signup-terms-checkbox"
                     type="checkbox"
                     id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
                     required
                     className="w-3.5 h-3.5 mt-0.5 rounded border-bis-border text-bis-burgundy focus:ring-bis-burgundy"
                   />

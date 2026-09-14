@@ -4,17 +4,27 @@ import { registerUser, loginUser, getUserById, getUserByEmail } from '../service
 import type { AuthenticatedRequest, UserRole } from '../types/index.js';
 import { generateToken } from '../utils/jwt.js';
 
-const phoneSchema = z.string().trim().min(8).max(20).regex(/^\+?[0-9 ()-]+$/, 'Enter a valid phone number');
+const phoneSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((val) => (!val || val.length === 0 ? undefined : val))
+  .refine((val) => !val || (val.length >= 8 && val.length <= 20 && /^\+?[0-9 ()-]+$/.test(val)), {
+    message: 'Phone number must be between 8 and 20 digits if provided',
+  });
+
 const registerSchema = z.object({
-  name: z.string().trim().min(2).max(150),
-  email: z.string().trim().email().transform((email) => email.toLowerCase()),
-  phone: phoneSchema.optional(),
-  password: z.string().min(8).max(128),
-  role: z.enum(['consumer', 'business', 'lab']),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(150),
+  email: z.string().trim().email('Please enter a valid email address').transform((email) => email.toLowerCase()),
+  phone: phoneSchema,
+  password: z.string().min(8, 'Password must be at least 8 characters long').max(128),
+  role: z.enum(['consumer', 'business', 'lab'], {
+    errorMap: () => ({ message: 'Please select a valid role' }),
+  }),
 });
 const loginSchema = z.object({
-  email: z.string().trim().email().transform((email) => email.toLowerCase()),
-  password: z.string().min(1).max(128),
+  email: z.string().trim().email('Please enter a valid email address').transform((email) => email.toLowerCase()),
+  password: z.string().min(1, 'Password is required').max(128),
 });
 
 function validationError(error: z.ZodError): string {

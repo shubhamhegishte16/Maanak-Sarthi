@@ -16,3 +16,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     res.status(401).json({ success: false, message: 'Invalid or expired authentication token' });
   }
 }
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+  const header = req.header('Authorization');
+  if (header?.startsWith('Bearer ')) {
+    try {
+      (req as AuthenticatedRequest).authUser = verifyToken(header.slice(7));
+    } catch {
+      // Ignore invalid token in optional auth
+    }
+  }
+  next();
+}
