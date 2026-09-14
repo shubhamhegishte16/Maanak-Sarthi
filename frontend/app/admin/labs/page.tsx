@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, MapPin } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface LabItem {
   id: string;
@@ -22,60 +23,61 @@ interface LabItem {
   validUntil: string;
 }
 
-const MOCK_LABS: LabItem[] = [
-  {
-    id: "lab-1",
-    code: "LAB-MUM-01",
-    nameKey: "labName1",
-    name: "Thermo Test Labs Private Limited",
-    location: "Mumbai, Maharashtra",
-    scopeKey: "labScope1",
-    testingScope: "Pumps, Motors & Industrial Cables (IS 17431, IS 694)",
-    status: "Recognized",
-    validUntil: "31 Dec 2026",
-  },
-  {
-    id: "lab-2",
-    code: "LAB-DEL-04",
-    nameKey: "labName2",
-    name: "National Testing House (NTH)",
-    location: "Ghaziabad / New Delhi",
-    scopeKey: "labScope2",
-    testingScope: "Electronics, IT Devices & Batteries (IS 13252)",
-    status: "Recognized",
-    validUntil: "15 Oct 2027",
-  },
-  {
-    id: "lab-3",
-    code: "LAB-BLR-09",
-    nameKey: "labName3",
-    name: "Apex Precision Calibration & Test Facility",
-    location: "Bengaluru, Karnataka",
-    scopeKey: "labScope3",
-    testingScope: "Toy Safety, Chemical Analysis (IS 9873)",
-    status: "Recognized",
-    validUntil: "20 Aug 2025",
-  },
-  {
-    id: "lab-4",
-    code: "LAB-CH-02",
-    nameKey: "labName4",
-    name: "Sun Energy PV Test Center",
-    location: "Chennai, Tamil Nadu",
-    scopeKey: "labScope4",
-    testingScope: "Solar Modules & Inverters (IS 14286)",
-    status: "Under Review",
-    validUntil: "Pending Renewal",
-  },
-];
-
 export default function LabsPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [labs, setLabs] = useState<LabItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_LABS.filter((l) => {
+  // Form state
+  const [formData, setFormData] = useState({ name: '', city: '', state: '' });
+
+  useEffect(() => {
+    fetchLabs();
+  }, []);
+
+  const fetchLabs = async () => {
+    try {
+      const res = await adminApi.getLabs();
+      if (res.data.success) {
+        const mapped = res.data.labs.map((l: any) => ({
+          id: l.id,
+          code: l.recognition_id || `LAB-${l.id.substring(0, 5).toUpperCase()}`,
+          nameKey: l.recognition_id || l.id,
+          name: l.name,
+          location: `${l.city || 'Unknown City'}, ${l.state || 'Unknown State'}`,
+          scopeKey: l.id,
+          testingScope: Array.isArray(l.supported_standards) ? l.supported_standards.join(', ') : (l.supported_standards || 'General Scope'),
+          status: 'Recognized',
+          validUntil: l.valid_through || 'Unknown',
+        }));
+        setLabs(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch labs", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddLab = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminApi.createLab(formData);
+      if (res.data.success) {
+        setIsModalOpen(false);
+        setFormData({ name: '', city: '', state: '' });
+        fetchLabs();
+      }
+    } catch (error) {
+      console.error("Failed to add lab", error);
+      alert("Failed to add lab");
+    }
+  };
+
+  const filteredData = labs.filter((l) => {
     const matchesSearch =
       t(l.nameKey, l.name).toLowerCase().includes(search.toLowerCase()) ||
       l.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -178,7 +180,7 @@ export default function LabsPage() {
         onClose={() => setIsModalOpen(false)}
         title={t("registerLabBtn", "Register Testing Laboratory")}
         subtitle="Add a BIS recognized testing facility to the network."
-        onSubmit={() => alert("Laboratory registered!")}
+        onSubmit={handleAddLab as any}
       >
         <div className="space-y-4">
           <div>
@@ -188,9 +190,35 @@ export default function LabsPage() {
             <input
               type="text"
               required
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
               placeholder="e.g. Thermo Test Labs Pvt Ltd"
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#243B3B] mb-1">City</label>
+              <input
+                type="text"
+                required
+                value={formData.city}
+                onChange={e => setFormData({...formData, city: e.target.value})}
+                placeholder="e.g. Mumbai"
+                className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#243B3B] mb-1">State</label>
+              <input
+                type="text"
+                required
+                value={formData.state}
+                onChange={e => setFormData({...formData, state: e.target.value})}
+                placeholder="e.g. Maharashtra"
+                className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
+              />
+            </div>
           </div>
         </div>
       </AdminModal>

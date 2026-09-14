@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getApiErrorMessage } from "@/lib/api";
 import { useAuth, type UserRole } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register } = useAuth();
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -145,19 +147,19 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
             <div className="pt-4 space-y-2.5">
               <div className="flex items-center space-x-2.5 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
                 <CheckCircle2 className="w-4 h-4 text-bis-gold flex-shrink-0" />
-                <span className="text-xs font-medium text-white/90">2.5M+ Verified Businesses & Consumers</span>
+                <span className="text-xs font-medium text-white/90">{t("authFeature1", "2.5M+ Verified Businesses & Consumers")}</span>
               </div>
               <div className="flex items-center space-x-2.5 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
                 <ShieldCheck className="w-4 h-4 text-bis-sage-light flex-shrink-0" />
-                <span className="text-xs font-medium text-white/90">Official Gazette Grounded Data</span>
+                <span className="text-xs font-medium text-white/90">{t("authFeature2", "Official Gazette Grounded Data")}</span>
               </div>
             </div>
           </div>
 
           {/* Bottom Security Note */}
           <div className="relative z-10 text-[11px] text-white/60 pt-4 border-t border-white/10 flex items-center justify-between">
-            <span>Encrypted 256-bit Connection</span>
-            <span className="font-mono text-bis-gold font-semibold">BIS 2026</span>
+            <span>{t("authFeature3", "Encrypted 256-bit Connection")}</span>
+            <span className="font-mono text-bis-gold font-semibold">{t("authFooter", "BIS 2026")}</span>
           </div>
 
         </div>
@@ -251,7 +253,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Acme Quality Corp"
+                      placeholder={t("authEgName", "e.g. Acme Quality Corp")}
                       className="w-full pl-9 pr-4 py-2.5 text-xs bg-white rounded-xl border border-bis-border focus:border-bis-burgundy focus:outline-none transition-colors"
                     />
                   </div>
@@ -275,7 +277,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.gov.in"
+                    placeholder={t("authEgEmail", "name@company.gov.in")}
                     className="w-full pl-9 pr-4 py-2.5 text-xs bg-white rounded-xl border border-bis-border focus:border-bis-burgundy focus:outline-none transition-colors"
                   />
                 </div>
@@ -305,7 +307,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                   <label className="text-xs font-semibold text-bis-slate">
                     Password
                     {mode === "signup" && (
-                      <span className="text-[10px] text-bis-slate-muted font-normal ml-1.5">(min 8 characters)</span>
+                      <span className="text-[10px] text-bis-slate-muted font-normal ml-1.5">{t("authMinChars", "(min 8 characters)")}</span>
                     )}
                   </label>
                   {mode === "signin" && (
@@ -396,7 +398,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                   className="px-3 py-2 bg-white rounded-xl border border-bis-border hover:border-bis-burgundy text-xs font-semibold text-bis-slate flex items-center justify-center space-x-2 transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-bis-gold" />
-                  <span>DigiLocker</span>
+                  <span>{t("authDigilocker", "DigiLocker")}</span>
                 </button>
                 <button
                   type="button"
@@ -404,7 +406,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin", onS
                   className="px-3 py-2 bg-white rounded-xl border border-bis-border hover:border-bis-burgundy text-xs font-semibold text-bis-slate flex items-center justify-center space-x-2 transition-all"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-bis-sage-dark" />
-                  <span>Parichay SSO</span>
+                  <span>{t("authParichay", "Parichay SSO")}</span>
                 </button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface QCOItem {
   id: string;
@@ -22,60 +23,61 @@ interface QCOItem {
   status: string;
 }
 
-const MOCK_QCOS: QCOItem[] = [
-  {
-    id: "qco-1",
-    qcoCode: "QCO-2025-17",
-    titleKey: "qcoTitle1",
-    title: "Electrical Equipment (Quality Control) Amendment Order, 2025",
-    ministryKey: "qcoMin1",
-    ministry: "DPIIT / Ministry of Heavy Industries",
-    notifiedDate: "15 Jan 2025",
-    enforcementDate: "15 Jul 2025",
-    status: "Enforced",
-  },
-  {
-    id: "qco-2",
-    qcoCode: "QCO-2024-88",
-    titleKey: "qcoTitle2",
-    title: "Toys (Quality Control) Order, 2024 Mandate",
-    ministryKey: "qcoMin2",
-    ministry: "Ministry of Commerce & Industry",
-    notifiedDate: "01 Dec 2024",
-    enforcementDate: "01 Jun 2025",
-    status: "Active",
-  },
-  {
-    id: "qco-3",
-    qcoCode: "QCO-2024-42",
-    titleKey: "qcoTitle3",
-    title: "Solar PV Systems and Component Quality Order",
-    ministryKey: "qcoMin3",
-    ministry: "Ministry of New & Renewable Energy",
-    notifiedDate: "20 Sep 2024",
-    enforcementDate: "20 Mar 2025",
-    status: "Under Review",
-  },
-  {
-    id: "qco-4",
-    qcoCode: "QCO-2024-12",
-    titleKey: "qcoTitle4",
-    title: "Chemicals & Petrochemicals (Quality Control) Mandate",
-    ministryKey: "qcoMin4",
-    ministry: "Department of Chemicals & Petrochemicals",
-    notifiedDate: "10 May 2024",
-    enforcementDate: "10 Nov 2024",
-    status: "Enforced",
-  },
-];
-
 export default function QCOsPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [qcos, setQcos] = useState<QCOItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_QCOS.filter((item) => {
+  // Form state
+  const [formData, setFormData] = useState({ qco_number: '', title: '' });
+
+  useEffect(() => {
+    fetchQcos();
+  }, []);
+
+  const fetchQcos = async () => {
+    try {
+      const res = await adminApi.getQcos();
+      if (res.data.success) {
+        const mapped = res.data.qcos.map((q: any) => ({
+          id: q.id,
+          qcoCode: q.qco_number,
+          titleKey: q.id,
+          title: q.title,
+          ministryKey: q.id,
+          ministry: q.ministry || 'DPIIT / Ministry of Heavy Industries',
+          notifiedDate: q.created_at ? new Date(q.created_at).toLocaleDateString() : 'Unknown',
+          enforcementDate: 'Pending', // Default
+          status: q.status || 'Active',
+        }));
+        setQcos(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch QCOs", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddQco = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminApi.createQco(formData);
+      if (res.data.success) {
+        setIsModalOpen(false);
+        setFormData({ qco_number: '', title: '' });
+        fetchQcos();
+      }
+    } catch (error) {
+      console.error("Failed to add QCO", error);
+      alert("Failed to add QCO");
+    }
+  };
+
+  const filteredData = qcos.filter((item) => {
     const translatedTitle = t(item.titleKey, item.title);
     const matchesSearch =
       item.qcoCode.toLowerCase().includes(search.toLowerCase()) ||
@@ -177,8 +179,8 @@ export default function QCOsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={t("createQcoBtn", "Create Quality Control Order")}
-        subtitle="Issue a statutory QCO mandate into the compliance index."
-        onSubmit={() => alert("QCO published successfully!")}
+        subtitle={t("adminSubQco", "Issue a statutory QCO mandate into the compliance index.")}
+        onSubmit={handleAddQco as any}
       >
         <div className="space-y-4">
           <div>
@@ -188,6 +190,8 @@ export default function QCOsPage() {
             <input
               type="text"
               required
+              value={formData.qco_number}
+              onChange={e => setFormData({...formData, qco_number: e.target.value})}
               placeholder="e.g. QCO-2025-19"
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
@@ -199,6 +203,8 @@ export default function QCOsPage() {
             <textarea
               rows={3}
               required
+              value={formData.title}
+              onChange={e => setFormData({...formData, title: e.target.value})}
               placeholder="Full text title of the Quality Control Order notification..."
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />

@@ -86,6 +86,26 @@ export const chatApi = {
     api.post<{ success: boolean; message: string }>(`/api/messages/${messageId}/feedback`, { rating, comment }),
 };
 
+export const adminApi = {
+  getUsers: () => api.get('/api/admin/users'),
+  getStandards: () => api.get('/api/admin/standards'),
+  createStandard: (data: any) => api.post('/api/admin/standards', data),
+  getLabs: () => api.get('/api/admin/labs'),
+  createLab: (data: any) => api.post('/api/admin/labs', data),
+  getSchemes: () => api.get('/api/admin/schemes'),
+  createScheme: (data: any) => api.post('/api/admin/schemes', data),
+  getQcos: () => api.get('/api/admin/qcos'),
+  createQco: (data: any) => api.post('/api/admin/qcos', data),
+  getDocuments: () => api.get('/api/admin/documents'),
+  createDocument: (data: any) => api.post('/api/admin/documents', data),
+  getLogs: () => api.get('/api/admin/logs'),
+};
+
+export const publicApi = {
+  getLabs: () => api.get('/api/public/labs'),
+  searchStandards: (q: string) => api.get(`/api/public/standards/search?q=${encodeURIComponent(q)}`),
+};
+
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) return error.response?.data?.message || fallback;
   return fallback;

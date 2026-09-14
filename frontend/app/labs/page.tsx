@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -24,6 +24,7 @@ import {
   Info
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { publicApi } from "@/lib/api";
 
 interface TestingLab {
   id: string;
@@ -44,117 +45,6 @@ interface TestingLab {
   lng: number;
 }
 
-const MOCK_LABS: TestingLab[] = [
-  {
-    id: "lab-1",
-    name: "BIS Central Laboratory (CL)",
-    category: "Electrical & Mechanical",
-    region: "North",
-    city: "Sahibabad",
-    state: "Uttar Pradesh",
-    address: "Plot No. 20/9, Site IV, Industrial Area, Sahibabad, Ghaziabad",
-    recognitionId: "BIS-CL-001",
-    validThrough: "Permanent Central Facility",
-    accreditation: "BIS In-House Central Laboratory",
-    supportedStandards: ["IS 302 (Part 1)", "IS 302 (Part 2/Sec 21)", "IS 16046 (Part 2)", "IS 4151"],
-    keyTests: ["Dielectric Strength", "Thermal Cut-out Abuse", "Mechanical Drop Impact", "Ingress Protection (IPX4)"],
-    contactEmail: "cl-ghaziabad@bis.gov.in",
-    contactPhone: "+91-120-4177100",
-    lat: 28.67,
-    lng: 77.34
-  },
-  {
-    id: "lab-2",
-    name: "Western Regional Laboratory (WRL)",
-    category: "Electrical & Chemical",
-    region: "West",
-    city: "Mumbai",
-    state: "Maharashtra",
-    address: "Manakalaya, E9, MIDC, Andheri (East), Mumbai",
-    recognitionId: "BIS-WRL-002",
-    validThrough: "Permanent Regional Facility",
-    accreditation: "NABL Accredited & BIS Regional Lab",
-    supportedStandards: ["IS 302 (Part 2/Sec 21)", "IS 17526", "IS 17803", "IS 10500"],
-    keyTests: ["Hydrostatic Pressure Burst", "Food Contact Material Leaching", "Insulation Resistance", "Water Purity"],
-    contactEmail: "wrl-mumbai@bis.gov.in",
-    contactPhone: "+91-22-28329295",
-    lat: 19.11,
-    lng: 72.86
-  },
-  {
-    id: "lab-3",
-    name: "Southern Regional Laboratory (SRL)",
-    category: "Electronics & Batteries",
-    region: "South",
-    city: "Chennai",
-    state: "Tamil Nadu",
-    address: "CIT Campus, IV Cross Road, Taramani, Chennai",
-    recognitionId: "BIS-SRL-003",
-    validThrough: "Permanent Regional Facility",
-    accreditation: "NABL Accredited Lab",
-    supportedStandards: ["IS 16046 (Part 2)", "IS 15885", "IS 616"],
-    keyTests: ["Lithium Cell Overcharge", "External Short Circuit at 55°C", "Vibration Shock Test", "Photometry"],
-    contactEmail: "srl-chennai@bis.gov.in",
-    contactPhone: "+91-44-22541442",
-    lat: 12.98,
-    lng: 80.24
-  },
-  {
-    id: "lab-4",
-    name: "National Test House (NTH - Western Region)",
-    category: "Mechanical & Building Materials",
-    region: "West",
-    city: "Pune",
-    state: "Maharashtra",
-    address: "F-10, MIDC Industrial Area, Pimpri, Pune",
-    recognitionId: "BIS-RECOG-NTH-142",
-    validThrough: "31 March 2028",
-    accreditation: "Government of India Recognized",
-    supportedStandards: ["IS 269", "IS 17526", "IS 4151"],
-    keyTests: ["Compressive Strength", "Chemical Analysis of Stainless Steel", "Helmet Impact Absorption"],
-    contactEmail: "nthpune-ca@nic.in",
-    contactPhone: "+91-20-27472091",
-    lat: 18.62,
-    lng: 73.81
-  },
-  {
-    id: "lab-5",
-    name: "Electronics Test & Development Centre (ETDC)",
-    category: "Electronics & IT Goods",
-    region: "South",
-    city: "Bengaluru",
-    state: "Karnataka",
-    address: "Peenya Industrial Area, 1st Stage, Bengaluru",
-    recognitionId: "BIS-RECOG-ETDC-089",
-    validThrough: "15 October 2027",
-    accreditation: "STQC / NABL Accredited",
-    supportedStandards: ["IS 16046 (Part 2)", "IS 15885", "IS 13252"],
-    keyTests: ["Secondary Battery Safety", "EMC Emission & Immunity", "Climatic Thermal Chamber Cycling"],
-    contactEmail: "etdcbang@stqc.nic.in",
-    contactPhone: "+91-80-28394464",
-    lat: 13.03,
-    lng: 77.51
-  },
-  {
-    id: "lab-6",
-    name: "Gujarat Laboratory for Industrial Standards (GLIS)",
-    category: "Chemical & Utensils",
-    region: "West",
-    city: "Ahmedabad",
-    state: "Gujarat",
-    address: "GIDC Phase II, Vatva, Ahmedabad",
-    recognitionId: "BIS-RECOG-GLIS-211",
-    validThrough: "30 June 2027",
-    accreditation: "BIS-Recognized Private Lab",
-    supportedStandards: ["IS 17526", "IS 17803", "IS 10500"],
-    keyTests: ["Spectrometric Metal Analysis", "Heavy Metal Migration", "Seal Vacuum Integrity"],
-    contactEmail: "testing@glislab.in",
-    contactPhone: "+91-79-25830911",
-    lat: 22.96,
-    lng: 72.63
-  }
-];
-
 const STATES = ["All States", "Maharashtra", "Uttar Pradesh", "Tamil Nadu", "Karnataka", "Gujarat"];
 const CATEGORIES = ["All Domains", "Electrical & Mechanical", "Electronics & IT Goods", "Chemical & Utensils"];
 
@@ -167,10 +57,49 @@ function BISLabFinderContent() {
   const [selectedState, setSelectedState] = useState("All States");
   const [selectedCategory, setSelectedCategory] = useState("All Domains");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [activeLab, setActiveLab] = useState<TestingLab | null>(MOCK_LABS[0]);
+  
+  const [labs, setLabs] = useState<TestingLab[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeLab, setActiveLab] = useState<TestingLab | null>(null);
+
+  useEffect(() => {
+    fetchLabs();
+  }, []);
+
+  const fetchLabs = async () => {
+    try {
+      const res = await publicApi.getLabs();
+      if (res.data.success) {
+        const mapped = res.data.labs.map((l: any) => ({
+          id: l.id,
+          name: l.name,
+          category: l.category || 'General',
+          region: l.region || 'Unknown',
+          city: l.city || 'Unknown',
+          state: l.state || 'Unknown',
+          address: l.address || 'Address not provided',
+          recognitionId: l.recognition_id || `LAB-${l.id.substring(0, 5).toUpperCase()}`,
+          validThrough: l.valid_through || 'Unknown',
+          accreditation: l.accreditation || 'Recognized',
+          supportedStandards: Array.isArray(l.supported_standards) ? l.supported_standards : [],
+          keyTests: Array.isArray(l.key_tests) ? l.key_tests : [],
+          contactEmail: l.contact_email || 'contact@lab.com',
+          contactPhone: l.contact_phone || '+91-0000000000',
+          lat: l.lat || 20,
+          lng: l.lng || 77
+        }));
+        setLabs(mapped);
+        if (mapped.length > 0) setActiveLab(mapped[0]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch labs", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredLabs = useMemo(() => {
-    return MOCK_LABS.filter((lab) => {
+    return labs.filter((lab) => {
       const matchQuery =
         !query ||
         lab.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -183,7 +112,7 @@ function BISLabFinderContent() {
 
       return matchQuery && matchState && matchCat;
     });
-  }, [query, selectedState, selectedCategory]);
+  }, [query, selectedState, selectedCategory, labs]);
 
   return (
     <main className="min-h-screen flex flex-col bg-bis-cream selection:bg-bis-burgundy selection:text-white">
@@ -287,7 +216,7 @@ function BISLabFinderContent() {
                   {/* Standards Supported Tags */}
                   <div>
                     <span className="text-[10px] font-bold text-bis-slate-muted uppercase tracking-wider block mb-1.5">
-                      Accredited Testing Scope:
+                      {t("labAccreditedScope", "Accredited Testing Scope:")}
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {lab.supportedStandards.map((std, i) => (
@@ -304,7 +233,7 @@ function BISLabFinderContent() {
                   {/* Key Capabilities */}
                   <div className="bg-bis-cream p-3 rounded-2xl border border-bis-border/60 text-[11px] space-y-1">
                     <span className="font-semibold text-bis-slate block text-[10px] uppercase">
-                      Sample Evaluated Parameters:
+                      {t("labSampleParams", "Sample Evaluated Parameters:")}
                     </span>
                     <p className="text-bis-slate-muted line-clamp-2">
                       {lab.keyTests.join(" • ")}
@@ -322,7 +251,7 @@ function BISLabFinderContent() {
                     href={`mailto:${lab.contactEmail}?subject=BIS%20Testing%20Inquiry`}
                     className="inline-flex items-center space-x-1 font-semibold text-bis-burgundy hover:underline"
                   >
-                    <span>Contact Lab</span>
+                    <span>{t("labContactLab", "Contact Lab")}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -342,10 +271,10 @@ function BISLabFinderContent() {
                   <Navigation className="w-6 h-6" />
                 </div>
                 <h4 className="font-serif-title text-lg font-semibold text-bis-slate">
-                  Geographic Testing Network Map
+                  {t("labMapTitle", "Geographic Testing Network Map")}
                 </h4>
                 <p className="text-xs text-bis-slate-muted max-w-md mx-auto leading-relaxed">
-                  Displaying accredited BIS Central Laboratories, Regional Offices, and NABL testing points across India.
+                  {t("labMapDesc", "Displaying accredited BIS Central Laboratories, Regional Offices, and NABL testing points across India.")}
                 </p>
 
                 {/* Mock Pin Badges */}
@@ -404,7 +333,7 @@ function BISLabFinderContent() {
 
                   <div className="pt-2 border-t border-bis-border/60">
                     <span className="text-[10px] font-bold text-bis-slate-muted uppercase block mb-1">
-                      Accredited Standard Scope:
+                      {t("labAccreditedStandardScope", "Accredited Standard Scope:")}
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {activeLab.supportedStandards.map((std, idx) => (
@@ -420,7 +349,7 @@ function BISLabFinderContent() {
                       href={`mailto:${activeLab.contactEmail}`}
                       className="w-full py-2 bg-bis-burgundy text-white font-semibold rounded-xl hover:bg-bis-burgundy-light flex items-center justify-center space-x-1 transition-colors"
                     >
-                      <span>Send Testing Query</span>
+                      <span>{t("labSendQuery", "Send Testing Query")}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   </div>

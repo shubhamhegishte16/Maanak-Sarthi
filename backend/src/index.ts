@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import publicRoutes from './routes/publicRoutes.js';
 import { ensureOfficialSourcesSeeded } from './services/sourceRetrievalService.js';
 
 dotenv.config();
@@ -17,6 +19,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api', chatRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
 
 // Base health check route to verify server initialization
 app.get('/api/health', (_req: Request, res: Response) => {

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, BookOpen, ShieldCheck, FlaskConical, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface SearchModalProps {
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
 
   if (!isOpen) return null;
@@ -52,7 +54,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               autoFocus
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search Indian Standards (IS), QCOs, Lab names (Press Enter to search)..."
+              placeholder={t("searchGlobalPlaceholder", "Search Indian Standards (IS), QCOs, Lab names (Press Enter to search)...")}
               className="w-full text-xs sm:text-sm text-bis-slate placeholder-bis-slate-muted bg-transparent focus:outline-none"
             />
           </div>
@@ -68,7 +70,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         {/* Quick Suggestion Tags */}
         <div className="p-4 bg-bis-cream-card/60 border-b border-bis-border/60">
           <p className="text-[11px] font-bold text-bis-slate-muted uppercase tracking-wider mb-2">
-            Suggested Filters
+            {t("searchSuggestedFilters", "Suggested Filters")}
           </p>
           <div className="flex flex-wrap gap-2 text-xs">
             <button 
@@ -76,28 +78,28 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               onClick={() => handleSelectResult("/standards?query=IS+302")} 
               className="px-3 py-1 bg-white rounded-full border border-bis-border text-bis-slate hover:border-bis-burgundy transition-all"
             >
-              Electrical Safety (IS 302)
+              {t("searchFilter1", "Electrical Safety (IS 302)")}
             </button>
             <button 
               type="button"
               onClick={() => handleSelectResult("/standards?query=IS+16046")} 
               className="px-3 py-1 bg-white rounded-full border border-bis-border text-bis-slate hover:border-bis-burgundy transition-all"
             >
-              Batteries (IS 16046)
+              {t("searchFilter2", "Batteries (IS 16046)")}
             </button>
             <button 
               type="button"
               onClick={() => handleSelectResult("/updates")} 
               className="px-3 py-1 bg-white rounded-full border border-bis-border text-bis-slate hover:border-bis-burgundy transition-all"
             >
-              Latest QCO Mandates
+              {t("searchFilter3", "Latest QCO Mandates")}
             </button>
             <button 
               type="button"
               onClick={() => handleSelectResult("/labs")} 
               className="px-3 py-1 bg-white rounded-full border border-bis-border text-bis-slate hover:border-bis-burgundy transition-all"
             >
-              Testing Labs
+              {t("searchFilter4", "Testing Labs")}
             </button>
           </div>
         </div>
@@ -126,8 +128,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
         {/* Footer */}
         <div className="p-3 bg-white border-t border-bis-border text-center text-[11px] text-bis-slate-muted flex items-center justify-between px-5">
-          <span>Search database across 20,000+ standards</span>
-          <span>Press <kbd className="px-1.5 py-0.5 bg-bis-cream border border-bis-border rounded font-mono text-[10px]">ESC</kbd> to close</span>
+          <span>{t("searchGlobalSearch", "Search database across 20,000+ standards")}</span>
+          <span>Press <kbd className="px-1.5 py-0.5 bg-bis-cream border border-bis-border rounded font-mono text-[10px]">{t("searchEsc", "ESC")}</kbd> {t("searchToClose", "to close")}</span>
         </div>
       </div>
     </div>

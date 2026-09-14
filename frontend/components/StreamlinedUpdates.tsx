@@ -11,8 +11,10 @@ import {
   FileSearch, 
   CheckCircle 
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function StreamlinedUpdates() {
+  const { t } = useLanguage();
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
@@ -89,16 +91,16 @@ export default function StreamlinedUpdates() {
           >
             <div>
               <div className="text-[11px] font-bold uppercase tracking-widest text-bis-slate-muted mb-2">
-                HOW IT WORKS
+                {t("updateHowItWorks", "HOW IT WORKS")}
               </div>
               <h3 className="text-2xl sm:text-3xl font-serif-title font-normal text-bis-slate">
                 From your question <br />
                 <span className="font-serif-italic text-bis-burgundy">
-                  to verified sources.
+                  {t("updateToVerifiedSources", "to verified sources.")}
                 </span>
               </h3>
               <p className="text-xs sm:text-sm text-bis-slate-muted mt-2 mb-6">
-                Simple steps. Trusted information.
+                {t("updateSimpleSteps", "Simple steps. Trusted information.")}
               </p>
 
               {/* 4 Minimalist Steps Grid */}
@@ -136,13 +138,13 @@ export default function StreamlinedUpdates() {
 
             <div className="mt-6 pt-4 border-t border-bis-border/50 flex items-center justify-between text-xs">
               <span className="text-bis-slate-muted text-[11px]">
-                Built on official gazette & standard references
+                {t("updateBuiltOn", "Built on official gazette & standard references")}
               </span>
               <button 
                 onClick={() => alert("Detailed guidance guide opened")}
                 className="font-medium text-bis-burgundy hover:underline inline-flex items-center space-x-1"
               >
-                <span>Learn more</span>
+                <span>{t("updateLearnMore", "Learn more")}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -160,17 +162,17 @@ export default function StreamlinedUpdates() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl sm:text-2xl font-serif-title font-semibold text-bis-slate">
-                    Latest Updates
+                    {t("updateLatestUpdates", "Latest Updates")}
                   </h3>
                   <p className="text-xs text-bis-slate-muted mt-0.5">
-                    Official amendments, QCOs, circulars and lab additions.
+                    {t("updateOfficialAmendments", "Official amendments, QCOs, circulars and lab additions.")}
                   </p>
                 </div>
                 <button 
                   onClick={() => alert("Viewing all updates")}
                   className="inline-flex items-center space-x-1 text-xs font-semibold text-bis-burgundy hover:underline"
                 >
-                  <span>View all</span>
+                  <span>{t("updateViewAll", "View all")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -197,7 +199,7 @@ export default function StreamlinedUpdates() {
                           <span>{item.date}</span>
                           {item.isNew && (
                             <span className="ml-1.5 px-1.5 py-0.2 rounded bg-bis-terracotta/15 text-bis-terracotta font-bold text-[9px] uppercase">
-                              NEW
+                              {t("updateNew", "NEW")}
                             </span>
                           )}
                         </div>
@@ -212,8 +214,8 @@ export default function StreamlinedUpdates() {
 
             {/* Bottom Minimal Info Badge */}
             <div className="mt-6 pt-4 border-t border-bis-border/50 flex items-center justify-between text-[11px] text-bis-slate-muted">
-              <span>Updated daily from official Gazette notifications</span>
-              <span className="font-mono text-bis-gold font-semibold">2026 Edition</span>
+              <span>{t("updateUpdatedDaily", "Updated daily from official Gazette notifications")}</span>
+              <span className="font-mono text-bis-gold font-semibold">{t("updateEdition2026", "2026 Edition")}</span>
             </div>
 
           </motion.div>

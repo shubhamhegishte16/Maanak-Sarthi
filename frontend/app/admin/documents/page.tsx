@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, FileCode } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -8,6 +8,7 @@ import { FilterBar } from "@/components/admin/FilterBar";
 import { DataTable, Column } from "@/components/admin/DataTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface DocItem {
   id: string;
@@ -20,55 +21,62 @@ interface DocItem {
   status: string;
 }
 
-const MOCK_DOCS: DocItem[] = [
-  {
-    id: "doc-1",
-    name: "Gazette_Notification_QCO_Electrical_2025.pdf",
-    categoryKey: "docCatQco",
-    category: "QCO Notification",
-    size: "2.4 MB",
-    uploadedAt: "Yesterday, 14:30",
-    standardsCount: 14,
-    status: "Active",
-  },
-  {
-    id: "doc-2",
-    name: "IS_17431_2024_Technical_Specification_Draft.pdf",
-    categoryKey: "docCatStd",
-    category: "Standard Gazette",
-    size: "5.8 MB",
-    uploadedAt: "10 Feb 2025",
-    standardsCount: 1,
-    status: "Active",
-  },
-  {
-    id: "doc-3",
-    name: "NABL_Test_Protocol_Guideline_Pumps.pdf",
-    categoryKey: "docCatTest",
-    category: "Testing Protocol",
-    size: "1.1 MB",
-    uploadedAt: "05 Feb 2025",
-    standardsCount: 6,
-    status: "Active",
-  },
-  {
-    id: "doc-4",
-    name: "Toys_QCO_Amendment_2024_Official.pdf",
-    categoryKey: "docCatQco",
-    category: "QCO Notification",
-    size: "3.2 MB",
-    uploadedAt: "28 Jan 2025",
-    standardsCount: 8,
-    status: "Active",
-  },
-];
-
 export default function DocumentsPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [documents, setDocuments] = useState<DocItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_DOCS.filter(
+  // Form state
+  const [formData, setFormData] = useState({ name: 'Uploaded Document', doc_type: 'PDF', size: '1.2 MB' });
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const res = await adminApi.getDocuments();
+      if (res.data.success) {
+        const mapped = res.data.documents.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          categoryKey: d.id,
+          category: d.doc_type || 'Document',
+          size: d.size || 'Unknown',
+          uploadedAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Unknown',
+          standardsCount: 0,
+          status: d.status || 'Active',
+        }));
+        setDocuments(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch documents", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminApi.createDocument({
+        name: `New_Gazette_Document_${Date.now()}.pdf`,
+        doc_type: 'PDF',
+        size: '2.5 MB'
+      });
+      if (res.data.success) {
+        setIsModalOpen(false);
+        fetchDocuments();
+      }
+    } catch (error) {
+      console.error("Failed to upload document", error);
+      alert("Failed to upload document");
+    }
+  };
+
+  const filteredData = documents.filter(
     (d) =>
       d.name.toLowerCase().includes(search.toLowerCase()) ||
       t(d.categoryKey, d.category).toLowerCase().includes(search.toLowerCase()) ||
@@ -153,13 +161,13 @@ export default function DocumentsPage() {
         onClose={() => setIsModalOpen(false)}
         title={t("uploadGazetteBtn", "Upload Gazette / Standard Document")}
         subtitle="Upload official PDF or DOCX file to run AI citation indexing."
-        onSubmit={() => alert("Document uploaded and indexed successfully!")}
+        onSubmit={handleAddDocument as any}
       >
         <div className="space-y-4">
           <div className="border-2 border-dashed border-[#DDD7D0] rounded-2xl p-6 text-center bg-[#FAF7F2]">
             <Upload className="w-8 h-8 text-[#5A102A] mx-auto mb-2" />
-            <p className="text-xs font-semibold text-[#243B3B]">Drag and drop your PDF / DOCX file</p>
-            <p className="text-[11px] text-[#6F7F7D] mt-1">Maximum file size: 50MB</p>
+            <p className="text-xs font-semibold text-[#243B3B]">{t("docDragDrop", "Drag and drop your PDF / DOCX file")}</p>
+            <p className="text-[11px] text-[#6F7F7D] mt-1">{t("docMaxFileSize", "Maximum file size: 50MB")}</p>
           </div>
         </div>
       </AdminModal>

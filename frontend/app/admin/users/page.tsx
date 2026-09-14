@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { UserPlus, Shield } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { UserPlus, Shield, Loader2 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { FilterBar } from "@/components/admin/FilterBar";
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface UserItem {
   id: string;
@@ -21,56 +22,41 @@ interface UserItem {
   lastLogin: string;
 }
 
-const MOCK_USERS: UserItem[] = [
-  {
-    id: "usr-1",
-    name: "Dr. Rajesh Sharma",
-    email: "r.sharma@bis.gov.in",
-    roleKey: "roleAdmin",
-    role: "System Administrator",
-    organization: "BIS Headquarters — Technical Directorate",
-    status: "Active",
-    lastLogin: "10 mins ago",
-  },
-  {
-    id: "usr-2",
-    name: "Ananya Deshmukh",
-    email: "ananya.d@dpiit.gov.in",
-    roleKey: "roleNodal",
-    role: "Ministry Nodal Officer",
-    organization: "DPIIT — Ministry of Commerce",
-    status: "Active",
-    lastLogin: "2 hours ago",
-  },
-  {
-    id: "usr-3",
-    name: "Vikram Sengupta",
-    email: "vikram@thermotestlabs.com",
-    roleKey: "roleLabAdmin",
-    role: "Lab Administrator",
-    organization: "Thermo Test Labs Mumbai",
-    status: "Active",
-    lastLogin: "1 day ago",
-  },
-  {
-    id: "usr-4",
-    name: "Priya Mehta",
-    email: "p.mehta@standards-auditors.org",
-    roleKey: "roleAuditor",
-    role: "Standards Auditor",
-    organization: "National Standards Audit Cell",
-    status: "Under Review",
-    lastLogin: "3 days ago",
-  },
-];
-
 export default function UsersPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_USERS.filter((u) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await adminApi.getUsers();
+        if (res.data.success) {
+          const mapped = res.data.users.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            roleKey: `role${u.role}`,
+            role: u.role,
+            organization: 'BIS Headquarters', // Mock default or fetch from DB if available
+            status: u.status || 'Active',
+            lastLogin: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Unknown',
+          }));
+          setUsers(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const filteredData = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface StandardItem {
   id: string;
@@ -22,75 +23,6 @@ interface StandardItem {
   clausesCount: number;
 }
 
-const MOCK_STANDARDS: StandardItem[] = [
-  {
-    id: "std-1",
-    isNumber: "IS 17431:2024",
-    titleKey: "stdTitle1",
-    title: "Safety requirements for industrial pumps and liquid handling",
-    sectorKey: "sectorMechanical",
-    sector: "Mechanical",
-    status: "Active",
-    lastRevised: "Jan 2024",
-    clausesCount: 42,
-  },
-  {
-    id: "std-2",
-    isNumber: "IS 13252 (Part 1):2010",
-    titleKey: "stdTitle2",
-    title: "Information Technology Equipment — Safety Requirements",
-    sectorKey: "sectorElectronics",
-    sector: "Electronics",
-    status: "Active",
-    lastRevised: "Nov 2023",
-    clausesCount: 88,
-  },
-  {
-    id: "std-3",
-    isNumber: "IS 9873 (Part 1):2019",
-    titleKey: "stdTitle3",
-    title: "Safety of Toys — Mechanical and Physical Properties",
-    sectorKey: "sectorConsumerGoods",
-    sector: "Consumer Goods",
-    status: "Under Review",
-    lastRevised: "Aug 2023",
-    clausesCount: 35,
-  },
-  {
-    id: "std-4",
-    isNumber: "IS 694:2010",
-    titleKey: "stdTitle4",
-    title: "Polyvinyl Chloride Insulated Cables for Working Voltages up to 1100V",
-    sectorKey: "sectorElectrical",
-    sector: "Electrical",
-    status: "Active",
-    lastRevised: "Feb 2024",
-    clausesCount: 54,
-  },
-  {
-    id: "std-5",
-    isNumber: "IS 15885 (Part 2/Sec 13)",
-    titleKey: "stdTitle5",
-    title: "Safety of Lamp Controlgear — AC or DC Supplied Electronic Controlgear for LED",
-    sectorKey: "sectorLighting",
-    sector: "Lighting",
-    status: "Active",
-    lastRevised: "May 2024",
-    clausesCount: 60,
-  },
-  {
-    id: "std-6",
-    isNumber: "IS 16333 (Part 3):2022",
-    titleKey: "stdTitle6",
-    title: "Mobile Phone Handsets — Indian Language Support Requirements",
-    sectorKey: "sectorTelecom",
-    sector: "Telecom",
-    status: "Draft",
-    lastRevised: "Dec 2024",
-    clausesCount: 28,
-  },
-];
-
 export default function StandardsPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
@@ -98,8 +30,56 @@ export default function StandardsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [standards, setStandards] = useState<StandardItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_STANDARDS.filter((item) => {
+  // Form state
+  const [formData, setFormData] = useState({ is_number: '', title: '', sector: 'Mechanical' });
+
+  useEffect(() => {
+    fetchStandards();
+  }, []);
+
+  const fetchStandards = async () => {
+    try {
+      const res = await adminApi.getStandards();
+      if (res.data.success) {
+        const mapped = res.data.standards.map((s: any) => ({
+          id: s.id,
+          isNumber: s.is_number,
+          titleKey: s.is_number, // fallback key
+          title: s.title,
+          sectorKey: `sector${s.sector.replace(/\s+/g, '')}`,
+          sector: s.sector,
+          status: s.status || 'Active',
+          lastRevised: s.last_revised || 'Unknown',
+          clausesCount: s.clauses_count || 0,
+        }));
+        setStandards(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch standards", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddStandard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminApi.createStandard(formData);
+      if (res.data.success) {
+        setIsModalOpen(false);
+        setFormData({ is_number: '', title: '', sector: 'Mechanical' });
+        fetchStandards();
+      }
+    } catch (error) {
+      console.error("Failed to add standard", error);
+      alert("Failed to add standard");
+    }
+  };
+
+  const filteredData = standards.filter((item) => {
     const translatedTitle = t(item.titleKey, item.title);
     const matchesSearch =
       item.isNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -224,8 +204,8 @@ export default function StandardsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={t("addNewStandardBtn", "Add New Indian Standard")}
-        subtitle="Register a new gazetted Indian Standard into the system repository."
-        onSubmit={() => alert("Standard saved successfully!")}
+        subtitle={t("adminSubStandard", "Register a new Indian Standard or amendment into the directory.")}
+        onSubmit={handleAddStandard as any}
       >
         <div className="space-y-4">
           <div>
@@ -235,6 +215,8 @@ export default function StandardsPage() {
             <input
               type="text"
               required
+              value={formData.is_number}
+              onChange={e => setFormData({...formData, is_number: e.target.value})}
               placeholder="e.g. IS 17431:2024"
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
@@ -246,6 +228,8 @@ export default function StandardsPage() {
             <input
               type="text"
               required
+              value={formData.title}
+              onChange={e => setFormData({...formData, title: e.target.value})}
               placeholder="Full official title of the standard..."
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
@@ -254,7 +238,11 @@ export default function StandardsPage() {
             <label className="block text-xs font-semibold text-[#243B3B] mb-1">
               {t("colSector", "Technical Sector")} *
             </label>
-            <select className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]">
+            <select 
+              value={formData.sector}
+              onChange={e => setFormData({...formData, sector: e.target.value})}
+              className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
+            >
               <option value="Mechanical">{t("sectorMechanical", "Mechanical")}</option>
               <option value="Electronics">{t("sectorElectronics", "Electronics")}</option>
               <option value="Electrical">{t("sectorElectrical", "Electrical")}</option>

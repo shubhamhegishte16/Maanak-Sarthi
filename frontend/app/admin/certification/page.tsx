@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { useLanguage } from "@/context/LanguageContext";
+import { adminApi } from "@/lib/api";
 
 interface SchemeItem {
   id: string;
@@ -23,63 +24,61 @@ interface SchemeItem {
   surveillanceInterval: string;
 }
 
-const MOCK_SCHEMES: SchemeItem[] = [
-  {
-    id: "sch-1",
-    schemeCode: "SCHEME-I",
-    nameKey: "schName1",
-    name: "Product Certification Scheme (ISI Mark)",
-    audienceKey: "schAudience1",
-    targetAudience: "Domestic Manufacturers & Factories",
-    standardsMapped: 850,
-    status: "Active",
-    ruleKey: "schRule1",
-    surveillanceInterval: "Annual Audit & Market Sampling",
-  },
-  {
-    id: "sch-2",
-    schemeCode: "SCHEME-II",
-    nameKey: "schName2",
-    name: "Compulsory Registration Scheme (CRS)",
-    audienceKey: "schAudience2",
-    targetAudience: "Electronics & IT Goods Manufacturers",
-    standardsMapped: 240,
-    status: "Active",
-    ruleKey: "schRule2",
-    surveillanceInterval: "Self-Declaration with Lab Test",
-  },
-  {
-    id: "sch-3",
-    schemeCode: "SCHEME-IV",
-    nameKey: "schName3",
-    name: "Foreign Manufacturers Certification Scheme (FMCS)",
-    audienceKey: "schAudience3",
-    targetAudience: "Overseas Exporters to India",
-    standardsMapped: 410,
-    status: "Active",
-    ruleKey: "schRule3",
-    surveillanceInterval: "Pre-Licence Foreign Factory Inspection",
-  },
-  {
-    id: "sch-4",
-    schemeCode: "SCHEME-HM",
-    nameKey: "schName4",
-    name: "Hallmarking of Precious Metals (HUID)",
-    audienceKey: "schAudience4",
-    targetAudience: "Jewellers & Hallmarking Centers",
-    standardsMapped: 12,
-    status: "Active",
-    ruleKey: "schRule4",
-    surveillanceInterval: "Real-time Portal Audit & Sampling",
-  },
-];
-
 export default function CertificationPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [schemes, setSchemes] = useState<SchemeItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_SCHEMES.filter(
+  // Form state
+  const [formData, setFormData] = useState({ scheme_id: '', name: '' });
+
+  useEffect(() => {
+    fetchSchemes();
+  }, []);
+
+  const fetchSchemes = async () => {
+    try {
+      const res = await adminApi.getSchemes();
+      if (res.data.success) {
+        const mapped = res.data.schemes.map((s: any) => ({
+          id: s.id,
+          schemeCode: s.scheme_id,
+          nameKey: s.id,
+          name: s.name,
+          audienceKey: s.id,
+          targetAudience: s.sector || 'General',
+          standardsMapped: s.standards_count || 0,
+          status: s.status || 'Active',
+          ruleKey: s.id,
+          surveillanceInterval: 'Standard Audit', // Default or fetch if available
+        }));
+        setSchemes(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch schemes", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddScheme = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await adminApi.createScheme(formData);
+      if (res.data.success) {
+        setIsModalOpen(false);
+        setFormData({ scheme_id: '', name: '' });
+        fetchSchemes();
+      }
+    } catch (error) {
+      console.error("Failed to add scheme", error);
+      alert("Failed to add scheme");
+    }
+  };
+
+  const filteredData = schemes.filter(
     (s) =>
       s.schemeCode.toLowerCase().includes(search.toLowerCase()) ||
       t(s.nameKey, s.name).toLowerCase().includes(search.toLowerCase()) ||
@@ -163,8 +162,8 @@ export default function CertificationPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={t("addSchemeBtn", "Add Certification Scheme Framework")}
-        subtitle="Define a new BIS conformity assessment scheme into the system registry."
-        onSubmit={() => alert("Scheme created successfully!")}
+        subtitle={t("adminSubScheme", "Define a new BIS conformity assessment scheme into the system registry.")}
+        onSubmit={handleAddScheme as any}
       >
         <div className="space-y-4">
           <div>
@@ -174,6 +173,8 @@ export default function CertificationPage() {
             <input
               type="text"
               required
+              value={formData.scheme_id}
+              onChange={e => setFormData({...formData, scheme_id: e.target.value})}
               placeholder="e.g. SCHEME-VI"
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
@@ -185,6 +186,8 @@ export default function CertificationPage() {
             <input
               type="text"
               required
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
               placeholder="e.g. Management Systems Certification"
               className="w-full px-3.5 py-2 text-xs bg-[#FAF7F2] border border-[#DDD7D0] rounded-xl text-[#243B3B]"
             />
