@@ -1,4 +1,5 @@
 import { pool } from './database.js';
+import { ensureAdminAccount } from './adminSeed.js';
 
 let isInitialized = false;
 
@@ -12,6 +13,66 @@ export async function initUserPanelDatabase(): Promise<void> {
     } catch (e) {
       console.warn('[initDatabase] pgcrypto notice:', (e as Error).message);
     }
+
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'role'
+        ) THEN
+          ALTER TABLE users ADD COLUMN role VARCHAR(30);
+        END IF;
+      END $$;
+    `);
+
+    await pool.query(`
+      DO $$
+      DECLARE
+        role_constraint_name TEXT;
+      BEGIN
+        SELECT conname INTO role_constraint_name
+        FROM pg_constraint
+        WHERE conrelid = 'users'::regclass AND contype = 'c' AND conname ILIKE '%role%';
+
+        IF role_constraint_name IS NOT NULL THEN
+          EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', role_constraint_name);
+        END IF;
+
+        ALTER TABLE users
+          ADD CONSTRAINT users_role_check
+          CHECK (role IN ('consumer', 'business', 'lab', 'admin'))
+          NOT VALID;
+      END $$;
+    `);
+
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'status'
+        ) THEN
+          ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'Active';
+        END IF;
+      END $$;
+    `);
+
+    await pool.query(`
+      UPDATE users
+      SET status = 'Active'
+      WHERE status IS NULL OR status = '';
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+        ALTER COLUMN status SET DEFAULT 'Active';
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+        ALTER COLUMN status SET NOT NULL;
+    `);
 
     // 2. Ensure base tables exist
     const baseTables = [
@@ -31,6 +92,26 @@ export async function initUserPanelDatabase(): Promise<void> {
         amendments_count INTEGER DEFAULT 0,
         last_amendment_date VARCHAR(50),
         recognized_labs_count INTEGER DEFAULT 12,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS labs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        region VARCHAR(50),
+        city VARCHAR(100),
+        state VARCHAR(100),
+        address TEXT,
+        recognition_id VARCHAR(100),
+        valid_through VARCHAR(100),
+        accreditation VARCHAR(100),
+        supported_standards JSONB DEFAULT '[]',
+        key_tests JSONB DEFAULT '[]',
+        contact_email VARCHAR(100),
+        contact_phone VARCHAR(50),
+        lat FLOAT,
+        lng FLOAT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       );`,
@@ -246,6 +327,8 @@ export async function initUserPanelDatabase(): Promise<void> {
     } catch (stdErr) {
       console.warn('[initDatabase] Standards seeding note:', (stdErr as Error).message);
     }
+
+    await ensureAdminAccount();
 
     // 5. Seed Schemes if empty
     try {

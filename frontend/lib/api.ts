@@ -87,6 +87,8 @@ export const chatApi = {
 };
 
 export const adminApi = {
+  getDashboardStats: () => api.get('/api/admin/dashboard/stats'),
+  getRecentActivity: () => api.get('/api/admin/dashboard/activity'),
   getUsers: () => api.get('/api/admin/users'),
   getStandards: () => api.get('/api/admin/standards'),
   createStandard: (data: any) => api.post('/api/admin/standards', data),
@@ -99,6 +101,10 @@ export const adminApi = {
   getDocuments: () => api.get('/api/admin/documents'),
   createDocument: (data: any) => api.post('/api/admin/documents', data),
   getLogs: () => api.get('/api/admin/logs'),
+  getAlerts: () => api.get('/api/admin/alerts'),
+  getFaqs: () => api.get('/api/admin/faqs'),
+  getIngestionJobs: () => api.get('/api/admin/ingestion/jobs'),
+  getLowConfidenceReviews: () => api.get('/api/admin/reviews/low-confidence'),
 };
 
 export const publicApi = {
@@ -158,4 +164,4 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) return error.response?.data?.message || fallback;
   return fallback;
 }
-
+

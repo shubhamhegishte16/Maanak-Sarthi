@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authApi } from '@/lib/api';
 
-export type UserRole = 'consumer' | 'business' | 'lab';
+export type UserRole = 'consumer' | 'business' | 'lab' | 'admin';
 export interface User { id: string; name: string; email: string; phone: string | null; role: UserRole; }
-export const roleLabels: Record<UserRole, string> = { consumer: 'Citizen Consumer', business: 'Manufacturer', lab: 'BIS Lab Officer' };
+export const roleLabels: Record<UserRole, string> = { consumer: 'Citizen Consumer', business: 'Manufacturer', lab: 'BIS Lab Officer', admin: 'System Administrator' };
 
 interface AuthContextValue {
   user: User | null;
@@ -51,15 +51,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, remember: boolean) => {
     const response = await authApi.login({ email, password });
     storeToken(response.data.token, remember);
-    setUser(response.data.user);
-    return response.data.user;
+    const nextUser = response.data.user;
+    setUser(nextUser);
+    if (typeof window !== 'undefined' && nextUser.role === 'admin') {
+      window.location.assign('/admin');
+    }
+    return nextUser;
   };
 
   const register = async (input: { name: string; email: string; phone?: string; password: string; role: UserRole }) => {
     const response = await authApi.register(input);
     storeToken(response.data.token, true);
-    setUser(response.data.user);
-    return response.data.user;
+    const nextUser = response.data.user;
+    setUser(nextUser);
+    if (typeof window !== 'undefined' && nextUser.role === 'admin') {
+      window.location.assign('/admin');
+    }
+    return nextUser;
   };
 
   const logout = () => { window.localStorage.removeItem(TOKEN_KEY); window.sessionStorage.removeItem(TOKEN_KEY); setUser(null); };

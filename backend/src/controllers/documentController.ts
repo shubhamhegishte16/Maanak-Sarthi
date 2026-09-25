@@ -52,11 +52,11 @@ export async function analyzeDocument(req: Request, res: Response): Promise<void
     res.json({
       success: true,
       document: {
+        ...analysis,
         id: savedDoc.id,
         name: savedDoc.name,
         size: savedDoc.size,
-        type: savedDoc.doc_type,
-        ...analysis,
+        type: savedDoc.doc_type || analysis.type || 'Gazette Notification',
       },
     });
   } catch (err) {
@@ -67,6 +67,7 @@ export async function analyzeDocument(req: Request, res: Response): Promise<void
 
 export async function askDocumentQuestion(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
+  const docId = Array.isArray(id) ? id[0] : id;
   const { question, history, docText, docName } = req.body;
 
   if (!question || typeof question !== 'string') {
@@ -79,8 +80,8 @@ export async function askDocumentQuestion(req: Request, res: Response): Promise<
     let nameToUse = docName || 'Document';
 
     // If doc ID provided and valid UUID, look up parsed content from DB
-    if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-      const docRes = await pool.query('SELECT name, parsed_content FROM documents WHERE id = $1', [id]);
+    if (docId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(docId)) {
+      const docRes = await pool.query('SELECT name, parsed_content FROM documents WHERE id = $1', [docId]);
       if (docRes.rows.length > 0) {
         nameToUse = docRes.rows[0].name;
         const parsed = docRes.rows[0].parsed_content;

@@ -17,6 +17,22 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 }
 
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  const authUser = (req as AuthenticatedRequest).authUser;
+
+  if (!authUser) {
+    res.status(401).json({ success: false, message: 'Authentication required' });
+    return;
+  }
+
+  if (authUser.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Admin access required' });
+    return;
+  }
+
+  next();
+}
+
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const header = req.header('Authorization');
   if (header?.startsWith('Bearer ')) {
@@ -30,4 +46,4 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 }
 
 export const authenticateToken = requireAuth;
-export const optionalAuthenticateToken = optionalAuth;
+export const optionalAuthenticateToken = optionalAuth;

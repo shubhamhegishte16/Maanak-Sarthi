@@ -332,7 +332,7 @@ export default function CompareStandardsPage() {
                 </td>
                 <td className="py-4 px-6 align-top">
                   <ul className="space-y-1.5 text-bis-slate">
-                    {stdA.keyRequirements.map((r, i) => (
+                    {stdA.keyRequirements.map((r: string, i: number) => (
                       <li key={i} className="flex items-start space-x-1.5">
                         <span className="text-bis-burgundy font-bold">•</span>
                         <span>{r}</span>
@@ -342,7 +342,7 @@ export default function CompareStandardsPage() {
                 </td>
                 <td className="py-4 px-6 align-top">
                   <ul className="space-y-1.5 text-bis-slate">
-                    {stdB.keyRequirements.map((r, i) => (
+                    {stdB.keyRequirements.map((r: string, i: number) => (
                       <li key={i} className="flex items-start space-x-1.5">
                         <span className="text-bis-sage-dark font-bold">•</span>
                         <span>{r}</span>
@@ -359,7 +359,7 @@ export default function CompareStandardsPage() {
                 </td>
                 <td className="py-4 px-6 align-top">
                   <ul className="space-y-1.5 text-bis-slate-muted">
-                    {stdA.testMethods.map((t, i) => (
+                    {stdA.testMethods.map((t: string, i: number) => (
                       <li key={i} className="flex items-start space-x-1.5">
                         <span className="text-bis-burgundy font-bold">✓</span>
                         <span>{t}</span>
@@ -369,7 +369,7 @@ export default function CompareStandardsPage() {
                 </td>
                 <td className="py-4 px-6 align-top">
                   <ul className="space-y-1.5 text-bis-slate-muted">
-                    {stdB.testMethods.map((t, i) => (
+                    {stdB.testMethods.map((t: string, i: number) => (
                       <li key={i} className="flex items-start space-x-1.5">
                         <span className="text-bis-sage-dark font-bold">✓</span>
                         <span>{t}</span>

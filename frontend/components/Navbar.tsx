@@ -27,7 +27,7 @@ import { useAuth, roleLabels } from "@/context/AuthContext";
 interface UserProfile {
   id: string;
   name: string;
-  role: "consumer" | "business" | "lab";
+  role: "consumer" | "business" | "lab" | "admin";
   email: string;
 }
 

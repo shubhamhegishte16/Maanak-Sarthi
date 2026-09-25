@@ -517,10 +517,8 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     labAccreditedScope: "Accredited Testing Scope:",
     labSampleParams: "Sample Evaluated Parameters:",
     labContactLab: "Contact Lab",
-    labMapTitle: "Geographic Testing Network Map",
     labMapDesc: "Displaying accredited BIS Central Laboratories, Regional Offices, and NABL testing points across India.",
     labAccreditedStandardScope: "Accredited Standard Scope:",
-    labSendQuery: "Send Testing Query",
     labLoading: "Loading Lab Finder...",
 
     findNoteScope: "Note on Scope:",
@@ -1087,10 +1085,8 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     labAccreditedScope: "मान्यता प्राप्त चाचणी दायरा:",
     labSampleParams: "नमुना मूल्यांकित मापदंड:",
     labContactLab: "प्रयोगशाला से संपर्क करें",
-    labMapTitle: "भौगोलिक परीक्षण नेटवर्क मानचित्र",
     labMapDesc: "भारत भर में मान्यता प्राप्त बीआईएस केंद्रीय प्रयोगशालाओं, क्षेत्रीय कार्यालयों और एनएबीएल परीक्षण बिंदुओं को प्रदर्शित कर रहा है।",
     labAccreditedStandardScope: "मान्यता प्राप्त मानक दायरा:",
-    labSendQuery: "परीक्षण प्रश्न भेजें",
     labLoading: "लैब फाइंडर लोड हो रहा है...",
 
     findNoteScope: "दायरा पर नोट:",
@@ -1657,10 +1653,8 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     labAccreditedScope: "मान्यता प्राप्त चाचणी व्याप्ती:",
     labSampleParams: "नमुना मूल्यांकन मापदंड:",
     labContactLab: "प्रयोगशाळेशी संपर्क साधा",
-    labMapTitle: "भौगोलिक चाचणी नेटवर्क नकाशा",
     labMapDesc: "भारतभरातील मान्यताप्राप्त बीआयएस केंद्रीय प्रयोगशाळा, प्रादेशिक कार्यालये आणि एनएबीएल चाचणी केंद्रे प्रदर्शित करत आहे.",
     labAccreditedStandardScope: "मान्यताप्राप्त मानक व्याप्ती:",
-    labSendQuery: "चाचणी प्रश्न पाठवा",
     labLoading: "लॅब फाइंडर लोड होत आहे...",
 
     findNoteScope: "व्याप्तीवरील नोंद:",
@@ -2227,10 +2221,8 @@ const DICTIONARY: Record<LanguageCode, Record<string, string>> = {
     labAccreditedScope: "గుర్తింపు పొందిన పరీక్షా పరిధి:",
     labSampleParams: "నమూనా మూల్యాంకన పారామితులు:",
     labContactLab: "ల్యాబ్‌ను సంప్రదించండి",
-    labMapTitle: "భౌగోళిక పరీక్షా నెట్‌వర్క్ మ్యాప్",
     labMapDesc: "భారతదేశం అంతటా గుర్తింపు పొందిన BIS సెంట్రల్ లాబొరేటరీలు, ప్రాంతీయ కార్యాలయాలు మరియు NABL పరీక్షా కేంద్రాలను ప్రదర్శిస్తోంది.",
     labAccreditedStandardScope: "గుర్తింపు పొందిన ప్రామాణిక పరిధి:",
-    labSendQuery: "పరీక్షా ప్రశ్నను పంపండి",
     labLoading: "ల్యాబ్ ఫైండర్ లోడ్ అవుతోంది...",
 
     findNoteScope: "పరిధిపై గమనిక:",

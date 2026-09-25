@@ -23,7 +23,12 @@ export function verifyToken(token: string): JwtPayload {
   if (typeof payload !== 'object' || !payload || typeof payload.userId !== 'string') {
     throw new Error('Invalid token payload');
   }
-  if (payload.role !== 'consumer' && payload.role !== 'business' && payload.role !== 'lab') {
+  if (
+    payload.role !== 'consumer' &&
+    payload.role !== 'business' &&
+    payload.role !== 'lab' &&
+    payload.role !== 'admin'
+  ) {
     throw new Error('Invalid token role');
   }
   return { userId: payload.userId, role: payload.role };

@@ -32,14 +32,17 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', service: 'manak-saarthi-backend' });
 });
 
-// Initialize official BIS sources and User Panel tables in Neon DB in background
-void ensureOfficialSourcesSeeded();
-void initUserPanelDatabase();
+async function startServer(): Promise<void> {
+  await initUserPanelDatabase();
 
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  }
 }
+
+void ensureOfficialSourcesSeeded();
+void startServer();
 
 export default app;

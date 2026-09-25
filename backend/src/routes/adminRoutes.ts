@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import {
   getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
   getStandards,
   createStandard,
   getLabs,
@@ -11,15 +15,33 @@ import {
   createQco,
   getDocuments,
   createDocument,
-  getLogs
+  getLogs,
+  getDashboardStats,
+  getRecentActivity,
+  getFailedDocuments,
+  retryDocument,
+  getIngestionJobs,
+  getLowConfidenceReviews,
+  getFaqs,
+  createFaq,
+  updateFaq,
+  deleteFaq,
+  getAlerts
 } from '../controllers/adminController.js';
+import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
-// In a real application, you would add an admin authentication middleware here,
-// e.g., requireAuth + requireAdminRole
-// For this completion task, we will keep it simple and accessible to match existing auth flow.
 const router = Router();
 
+router.use(requireAuth, requireAdmin);
+
+router.get('/dashboard/stats', getDashboardStats);
+router.get('/dashboard/activity', getRecentActivity);
+
 router.get('/users', getUsers);
+router.get('/users/:id', getUserById);
+router.post('/users', createUser);
+router.patch('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 
 router.get('/standards', getStandards);
 router.post('/standards', createStandard);
@@ -34,8 +56,17 @@ router.get('/qcos', getQcos);
 router.post('/qcos', createQco);
 
 router.get('/documents', getDocuments);
+router.get('/documents/failed', getFailedDocuments);
 router.post('/documents', createDocument);
+router.post('/documents/:id/retry', retryDocument);
 
+router.get('/ingestion/jobs', getIngestionJobs);
+router.get('/reviews/low-confidence', getLowConfidenceReviews);
+router.get('/faqs', getFaqs);
+router.post('/faqs', createFaq);
+router.patch('/faqs/:id', updateFaq);
+router.delete('/faqs/:id', deleteFaq);
+router.get('/alerts', getAlerts);
 router.get('/logs', getLogs);
 
 export default router;

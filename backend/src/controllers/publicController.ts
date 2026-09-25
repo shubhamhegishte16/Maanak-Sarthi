@@ -259,13 +259,14 @@ export async function getStandards(req: Request, res: Response): Promise<void> {
 
 export async function getStandardById(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
+  const standardId = Array.isArray(id) ? id[0] : id;
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isUuid = typeof standardId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(standardId);
     const query = isUuid
       ? 'SELECT * FROM standards WHERE id = $1'
       : 'SELECT * FROM standards WHERE is_number ILIKE $1 LIMIT 1';
 
-    const result = await pool.query(query, [isUuid ? id : `%${id}%`]);
+    const result = await pool.query(query, [isUuid ? standardId : `%${standardId}%`]);
     if (result.rows.length > 0) {
       res.json({ success: true, standard: result.rows[0] });
       return;
@@ -274,7 +275,7 @@ export async function getStandardById(req: Request, res: Response): Promise<void
     console.warn('[publicController] getStandardById DB fallback:', (err as Error).message);
   }
 
-  const match = FALLBACK_STANDARDS.find(s => s.id === id || s.is_number.toLowerCase().includes(id.toLowerCase())) || FALLBACK_STANDARDS[0];
+  const match = FALLBACK_STANDARDS.find(s => s.id === standardId || s.is_number.toLowerCase().includes((standardId ?? '').toLowerCase())) || FALLBACK_STANDARDS[0];
   res.json({ success: true, standard: match });
 }
 
@@ -354,13 +355,14 @@ export async function getSchemes(_req: Request, res: Response): Promise<void> {
 
 export async function getSchemeById(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
+  const schemeId = Array.isArray(id) ? id[0] : id;
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isUuid = typeof schemeId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(schemeId);
     const query = isUuid
       ? 'SELECT * FROM schemes WHERE id = $1'
       : 'SELECT * FROM schemes WHERE scheme_id ILIKE $1 LIMIT 1';
 
-    const result = await pool.query(query, [id]);
+    const result = await pool.query(query, [isUuid ? schemeId : schemeId]);
     if (result.rows.length > 0) {
       res.json({ success: true, scheme: result.rows[0] });
       return;
@@ -369,7 +371,7 @@ export async function getSchemeById(req: Request, res: Response): Promise<void> 
     console.warn('[publicController] getSchemeById DB fallback:', (err as Error).message);
   }
 
-  const match = FALLBACK_SCHEMES.find(s => s.id === id || s.scheme_id === id) || FALLBACK_SCHEMES[0];
+  const match = FALLBACK_SCHEMES.find(s => s.id === schemeId || s.scheme_id === schemeId) || FALLBACK_SCHEMES[0];
   res.json({ success: true, scheme: match });
 }
 
